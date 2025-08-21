@@ -14,7 +14,7 @@ type Metadata struct {
 	Artist      string     `yaml:"artist,omitempty"`
 	Album       string     `yaml:"album,omitempty"`
 	AlbumArtist string     `yaml:"albumArtist,omitempty"`
-	Year        int        `yaml:"year,omitempty"`
+	Date        string     `yaml:"date,omitempty"`  // TDRC tag for ID3v2.4 (YYYY-MM-DD format)
 	Track       int        `yaml:"track,omitempty"`
 	TotalTracks int        `yaml:"totalTracks,omitempty"`
 	Disc        int        `yaml:"disc,omitempty"`

@@ -115,8 +115,17 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	id3tag.SetAlbum(metadata.Album)
 	id3tag.SetGenre(metadata.Genre)
 
-	if metadata.Year != 0 {
-		id3tag.SetYear(fmt.Sprintf("%d", metadata.Year))
+	// Set date using TDRC tag (ID3v2.4) and Year for compatibility
+	if metadata.Date != "" {
+		id3tag.AddTextFrame("TDRC", id3v2.EncodingUTF8, metadata.Date)
+
+		// Also set Year for ID3v2.3 compatibility
+		// Extract year part from date (supports YYYY, YYYY-MM, YYYY-MM-DD formats)
+		yearStr := metadata.Date
+		if len(yearStr) >= 4 {
+			yearStr = yearStr[:4]
+			id3tag.SetYear(yearStr)
+		}
 	}
 
 	// Set additional text frames

@@ -35,10 +35,14 @@ func (c *Chapel) Dump(output io.Writer) error {
 	metadata.Album = id3tag.Album()
 	metadata.Genre = id3tag.Genre()
 
-	if id3tag.Year() != "" {
-		if year, err := strconv.Atoi(id3tag.Year()); err == nil {
-			metadata.Year = year
+	// Try to get date from TDRC (ID3v2.4) or fall back to Year
+	if dateFramer := id3tag.GetLastFrame("TDRC"); dateFramer != nil {
+		if tf, ok := dateFramer.(id3v2.TextFrame); ok {
+			metadata.Date = tf.Text
 		}
+	} else if id3tag.Year() != "" {
+		// Fall back to Year for ID3v2.3 compatibility
+		metadata.Date = id3tag.Year()
 	}
 
 	// Get additional metadata from specific frames
