@@ -24,8 +24,3 @@ func (c *Chapel) Apply(input io.Reader) error {
 	// Implement the logic to apply changes to the audio file here.
 	return fmt.Errorf("not implemented yet")
 }
-
-func (c *Chapel) Dump(output io.Writer) error {
-	// Implement the logic to dump the audio file information here.
-	return fmt.Errorf("not implemented yet")
-}

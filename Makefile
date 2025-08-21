@@ -12,10 +12,15 @@ deps:
 devel-deps:
 	go install github.com/Songmu/godzil/cmd/godzil@latest
 	go install github.com/tcnksm/ghr@latest
+	go install honnef.co/go/tools/cmd/staticcheck@latest
 
 .PHONY: test
 test:
 	go test
+
+.PHONY:lint
+lint:
+	staticcheck ./...
 
 .PHONY: build
 build:
