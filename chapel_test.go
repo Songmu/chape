@@ -14,7 +14,7 @@ func TestMetadataYAMLMarshal(t *testing.T) {
 		Artist:      "Test Artist",
 		Album:       "Test Album",
 		AlbumArtist: "Test Album Artist",
-		Year:        2024,
+		Date:        "2024",
 		Track:       1,
 		TotalTracks: 10,
 		Genre:       "Podcast",
@@ -39,8 +39,8 @@ func TestMetadataYAMLMarshal(t *testing.T) {
 	if !strings.Contains(yamlStr, "artist: Test Artist") {
 		t.Errorf("YAML should contain artist")
 	}
-	if !strings.Contains(yamlStr, "year: 2024") {
-		t.Errorf("YAML should contain year")
+	if !strings.Contains(yamlStr, "date: \"2024\"") {
+		t.Errorf("YAML should contain date")
 	}
 	if !strings.Contains(yamlStr, "- 0:00 Introduction") {
 		t.Errorf("YAML should contain chapters")
