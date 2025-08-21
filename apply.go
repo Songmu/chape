@@ -5,6 +5,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -45,8 +46,29 @@ func (c *Chapel) Apply(input io.Reader) error {
 		if diff != "" {
 			fmt.Printf("The following changes will be applied:\n%s\n", diff)
 
-			// Prompt user for confirmation
-			if !prompter.YN("Apply these changes?", true) {
+			// Prompt user for confirmation by reopening stdin from terminal
+			// Use /dev/tty on Unix-like systems, CON on Windows
+			consoleDevice := "/dev/tty"
+			if runtime.GOOS == "windows" {
+				consoleDevice = "CON"
+			}
+
+			tty, err := os.OpenFile(consoleDevice, os.O_RDWR, 0)
+			if err != nil {
+				return fmt.Errorf("failed to open %s: %w", consoleDevice, err)
+			}
+			defer tty.Close()
+
+			// Temporarily replace stdin with tty
+			oldStdin := os.Stdin
+			os.Stdin = tty
+
+			confirmed := prompter.YN("Apply these changes?", true)
+
+			// Restore original stdin
+			os.Stdin = oldStdin
+
+			if !confirmed {
 				fmt.Println("Changes not applied.")
 				return nil
 			}
