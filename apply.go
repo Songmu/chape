@@ -109,11 +109,19 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	// Clear existing frames to avoid duplicates
 	id3tag.DeleteAllFrames()
 
-	// Set basic metadata
-	id3tag.SetTitle(metadata.Title)
-	id3tag.SetArtist(metadata.Artist)
-	id3tag.SetAlbum(metadata.Album)
-	id3tag.SetGenre(metadata.Genre)
+	// Set basic metadata with UTF-8 encoding for multibyte support
+	if metadata.Title != "" {
+		id3tag.AddTextFrame("TIT2", id3v2.EncodingUTF8, metadata.Title)
+	}
+	if metadata.Artist != "" {
+		id3tag.AddTextFrame("TPE1", id3v2.EncodingUTF8, metadata.Artist)
+	}
+	if metadata.Album != "" {
+		id3tag.AddTextFrame("TALB", id3v2.EncodingUTF8, metadata.Album)
+	}
+	if metadata.Genre != "" {
+		id3tag.AddTextFrame("TCON", id3v2.EncodingUTF8, metadata.Genre)
+	}
 
 	// Set date using TDRC tag (ID3v2.4) and Year for compatibility
 	if metadata.Date != "" {
@@ -121,9 +129,8 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 
 		// Also set Year for ID3v2.3 compatibility
 		// Extract year part from date (supports YYYY, YYYY-MM, YYYY-MM-DD formats)
-		yearStr := metadata.Date
-		if len(yearStr) >= 4 {
-			yearStr = yearStr[:4]
+		if len(metadata.Date) >= 4 {
+			yearStr := metadata.Date[:4]
 			id3tag.SetYear(yearStr)
 		}
 	}
