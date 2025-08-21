@@ -2,7 +2,6 @@ package chapel
 
 import (
 	"fmt"
-	"io"
 )
 
 type Chapel struct {
@@ -17,10 +16,5 @@ func New(audio string) *Chapel {
 
 func (c *Chapel) Edit() error {
 	// Implement the logic to edit the audio file here.
-	return fmt.Errorf("not implemented yet")
-}
-
-func (c *Chapel) Apply(input io.Reader) error {
-	// Implement the logic to apply changes to the audio file here.
 	return fmt.Errorf("not implemented yet")
 }
