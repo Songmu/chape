@@ -40,44 +40,40 @@ func (c *Chapel) Apply(input io.Reader) error {
 	currentYAML := currentOutput.String()
 	newYAML := string(yamlData)
 
-	// Compare and show diff if different
-	if currentYAML != newYAML {
-		diff := generateDiff(currentYAML, newYAML)
-		if diff != "" {
-			fmt.Printf("The following changes will be applied:\n%s\n", diff)
-
-			// Prompt user for confirmation by reopening stdin from terminal
-			// Use /dev/tty on Unix-like systems, CON on Windows
-			consoleDevice := "/dev/tty"
-			if runtime.GOOS == "windows" {
-				consoleDevice = "CON"
-			}
-
-			tty, err := os.OpenFile(consoleDevice, os.O_RDWR, 0)
-			if err != nil {
-				return fmt.Errorf("failed to open %s: %w", consoleDevice, err)
-			}
-			defer tty.Close()
-
-			// Temporarily replace stdin with tty
-			oldStdin := os.Stdin
-			os.Stdin = tty
-
-			confirmed := prompter.YN("Apply these changes?", true)
-
-			// Restore original stdin
-			os.Stdin = oldStdin
-
-			if !confirmed {
-				fmt.Println("Changes not applied.")
-				return nil
-			}
-		}
-	} else {
+	if currentYAML == newYAML {
 		fmt.Println("No changes to apply.")
 		return nil
 	}
+	// Compare and show diff if different
+	diff := generateDiff(currentYAML, newYAML)
+	fmt.Printf("The following changes will be applied:\n%s\n", diff)
+	// Check if input is os.Stdin (when called from pipe/redirect)
+	// Type assertion to check if input is *os.File and if it's stdin
+	if file, ok := input.(*os.File); ok && file == os.Stdin {
+		// Input is from stdin (e.g., chapel apply < file.yaml)
+		// Need to reopen terminal for user interaction
 
+		// Use /dev/tty on Unix-like systems, CON on Windows
+		consoleDevice := "/dev/tty"
+		if runtime.GOOS == "windows" {
+			consoleDevice = "CON"
+		}
+
+		tty, err := os.OpenFile(consoleDevice, os.O_RDWR, 0)
+		if err != nil {
+			return fmt.Errorf("failed to open %s: %w", consoleDevice, err)
+		}
+		defer tty.Close()
+
+		// Temporarily replace stdin with tty
+		oldStdin := os.Stdin
+		os.Stdin = tty
+		defer func() { os.Stdin = oldStdin }()
+	}
+	if !prompter.YN("Apply these changes?", true) {
+		fmt.Println("Changes not applied.")
+		return nil
+	}
 	// Apply changes to MP3 file
 	err = c.writeMetadata(&newMetadata)
 	if err != nil {
