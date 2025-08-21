@@ -1,0 +1,2 @@
+- [ ] README.md
+- [ ] schema.yaml
