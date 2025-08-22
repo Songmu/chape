@@ -326,6 +326,38 @@ func TestParseArtwork(t *testing.T) {
 	}
 }
 
+func TestParseHTTPURL(t *testing.T) {
+	tests := []struct {
+		name        string
+		url         string
+		expectError bool
+	}{
+		{"invalid URL", "http://invalid-domain-that-does-not-exist.invalid", true},
+		{"non-HTTP URL", "ftp://example.com/image.jpg", false}, // Should be treated as file path, not HTTP
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.url == "ftp://example.com/image.jpg" {
+				// This should be treated as file path, not HTTP URL
+				_, _, err := parseArtwork(tt.url)
+				if err == nil {
+					t.Error("parseArtwork with FTP URL should return error (treated as file path)")
+				}
+				return
+			}
+
+			_, _, err := parseHTTPURL(tt.url)
+			if tt.expectError && err == nil {
+				t.Errorf("parseHTTPURL(%q) should return error", tt.url)
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("parseHTTPURL(%q) returned unexpected error: %v", tt.url, err)
+			}
+		})
+	}
+}
+
 func TestGetMimeTypeFromExt(t *testing.T) {
 	tests := []struct {
 		ext      string

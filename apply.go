@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -280,11 +281,14 @@ func readMP3Duration(r io.ReadSeeker) (time.Duration, error) {
 	return t, nil
 }
 
-// parseArtwork parses artwork string (data URI or file path) and returns picture data and MIME type
+// parseArtwork parses artwork string (data URI, HTTP/HTTPS URL, or file path) and returns picture data and MIME type
 func parseArtwork(artwork string) ([]byte, string, error) {
 	if strings.HasPrefix(artwork, "data:") {
 		// Parse data URI
 		return parseDataURI(artwork)
+	} else if strings.HasPrefix(artwork, "http://") || strings.HasPrefix(artwork, "https://") {
+		// Download from HTTP/HTTPS URL
+		return parseHTTPURL(artwork)
 	} else {
 		// Treat as file path
 		return parseFilePath(artwork)
@@ -356,4 +360,51 @@ func getMimeTypeFromExt(ext string) string {
 	default:
 		return ""
 	}
+}
+
+var userAgent = "chapel/" + Version + " (+https://github.com/Songmu/chapel)"
+
+// parseHTTPURL downloads artwork from HTTP/HTTPS URL and returns picture data and MIME type
+func parseHTTPURL(url string) ([]byte, string, error) {
+	// Create HTTP client with timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	// Create request with User-Agent header
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to create request for %s: %w", url, err)
+	}
+	req.Header.Set("User-Agent", userAgent)
+
+	// Download the image
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to download image from %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	// Check status code
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", fmt.Errorf("failed to download image from %s: HTTP %d", url, resp.StatusCode)
+	}
+
+	// Read the response body
+	pictureData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read image data from %s: %w", url, err)
+	}
+
+	// Determine MIME type from Content-Type header
+	mimeType := resp.Header.Get("Content-Type")
+	if mimeType == "" {
+		// Fallback: try to determine from URL extension
+		mimeType = getMimeTypeFromExt(filepath.Ext(url))
+		if mimeType == "" {
+			return nil, "", fmt.Errorf("unable to determine MIME type for %s", url)
+		}
+	}
+
+	return pictureData, mimeType, nil
 }

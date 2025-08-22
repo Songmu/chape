@@ -31,8 +31,9 @@ chapters:
   - "4:30 ブリッジ"
   - "5:45 アウトロ"
 
-# カバーアート (APIC) - データURIまたはファイルパス
+# カバーアート (APIC) - データURI、HTTP/HTTPS URL、またはファイルパス
 artwork: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEA..."  # データURI
+# artwork: "https://example.com/cover.jpg"  # HTTP/HTTPS URL
 # artwork: "/absolute/path/to/cover.jpg"  # 絶対パス
 # artwork: "cover.jpg"  # 相対パス
 # artwork: "./images/cover.jpg"  # 相対パス
@@ -66,6 +67,7 @@ lyrics: |
 
 #### アートワーク
 - **データURI形式**: `data:image/jpeg;base64,<base64データ>`
+- **HTTP/HTTPS URL形式**: `https://example.com/cover.jpg` (リモートからダウンロード)
 - **ファイルパス形式**:
   - 絶対パス: `/absolute/path/to/image.jpg`
   - 相対パス: `cover.jpg`, `./images/cover.jpg` (作業ディレクトリからの相対)

@@ -45,7 +45,7 @@ properties:
     description: Beats per minute for musical content. Not typically used for podcasts.
   artwork:
     type: string
-    description: Artwork as data URI (data:image/jpeg;base64,...) or file path (absolute or relative). For podcasts, this is the episode or series artwork/cover image.
+    description: Artwork as data URI (data:image/jpeg;base64,...), HTTP/HTTPS URL, or file path (absolute or relative). For podcasts, this is the episode or series artwork/cover image.
   lyrics:
     type: string
     description: Song lyrics or transcript. For podcasts, this can contain the episode transcript.
