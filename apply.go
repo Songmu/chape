@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -46,12 +47,12 @@ func (c *Chapel) Apply(input io.Reader) error {
 	newYAML := string(normalizedNewYAMLData)
 
 	if currentYAML == newYAML {
-		fmt.Println("No changes to apply.")
+		log.Println("No changes to apply.")
 		return nil
 	}
 	// Compare and show diff if different
 	diff := generateDiff(currentYAML, newYAML)
-	fmt.Printf("The following changes will be applied:\n%s\n", diff)
+	log.Printf("The following changes will be applied:\n%s\n", diff)
 	// Check if input is os.Stdin (when called from pipe/redirect)
 	// Type assertion to check if input is *os.File and if it's stdin
 	if file, ok := input.(*os.File); ok && file == os.Stdin {
@@ -76,7 +77,7 @@ func (c *Chapel) Apply(input io.Reader) error {
 		defer func() { os.Stdin = oldStdin }()
 	}
 	if !prompter.YN("Apply these changes?", true) {
-		fmt.Println("Changes not applied.")
+		log.Println("Changes not applied.")
 		return nil
 	}
 	// Apply changes to MP3 file
@@ -85,7 +86,7 @@ func (c *Chapel) Apply(input io.Reader) error {
 		return fmt.Errorf("failed to write metadata: %w", err)
 	}
 
-	fmt.Println("Metadata updated successfully.")
+	log.Println("Metadata updated successfully.")
 	return nil
 }
 
