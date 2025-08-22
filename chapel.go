@@ -25,7 +25,7 @@ func New(audio string, artwork ...string) *Chapel {
 	return c
 }
 
-func (c *Chapel) Edit() error {
+func (c *Chapel) Edit(yes bool) error {
 	// Create a temporary YAML file with current metadata
 	tempFile, err := os.CreateTemp("", "chapel-*.yaml")
 	if err != nil {
@@ -87,7 +87,7 @@ func (c *Chapel) Edit() error {
 	defer editedFile.Close()
 
 	// Apply the edited metadata
-	err = c.Apply(editedFile)
+	err = c.Apply(editedFile, yes)
 	if err != nil {
 		return fmt.Errorf("failed to apply changes: %w", err)
 	}

@@ -20,7 +20,7 @@ import (
 	"github.com/tcolgate/mp3"
 )
 
-func (c *Chapel) Apply(input io.Reader) error {
+func (c *Chapel) Apply(input io.Reader, yes bool) error {
 	var newMetadata Metadata
 	if err := yaml.NewDecoder(input).Decode(&newMetadata); err != nil {
 		return fmt.Errorf("failed to decode YAML: %w", err)
@@ -76,7 +76,7 @@ func (c *Chapel) Apply(input io.Reader) error {
 		os.Stdin = tty
 		defer func() { os.Stdin = oldStdin }()
 	}
-	if !prompter.YN("Apply these changes?", true) {
+	if !yes && !prompter.YN("Apply these changes?", true) {
 		log.Println("Changes not applied.")
 		return nil
 	}
