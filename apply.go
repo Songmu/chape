@@ -198,6 +198,29 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 				Picture:     pictureData,
 			}
 			id3tag.AddAttachedPicture(pictureFrame)
+
+			// Store artwork source in TXXX frame
+			// Skip data URIs as they don't need source tracking
+			if !strings.HasPrefix(metadata.Artwork, "data:") {
+				txxxFrames := id3tag.GetFrames("TXXX")
+				var preservedFrames []id3v2.TextFrame
+				// Collect all non-CHAPEL_SOURCE TXXX frames
+				for _, frame := range txxxFrames {
+					if tf, ok := frame.(id3v2.TextFrame); ok {
+						if !strings.HasPrefix(tf.Text, "CHAPEL_SOURCE\x00") {
+							preservedFrames = append(preservedFrames, tf)
+						}
+					}
+				}
+				// Clear all TXXX frames and re-add preserved ones
+				id3tag.DeleteFrames("TXXX")
+				for _, frame := range preservedFrames {
+					id3tag.AddTextFrame("TXXX", frame.Encoding, frame.Text)
+				}
+				// Add new CHAPEL_SOURCE frame
+				chapelSourceValue := "CHAPEL_SOURCE\x00" + metadata.Artwork
+				id3tag.AddTextFrame("TXXX", id3v2.EncodingUTF8, chapelSourceValue)
+			}
 		}
 	}
 

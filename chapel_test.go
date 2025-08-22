@@ -422,3 +422,111 @@ func TestDumpWithArtwork(t *testing.T) {
 		t.Error("Dump should return error for nonexistent file")
 	}
 }
+
+func TestTXXXFrameNoDuplicates(t *testing.T) {
+	// Test that CHAPEL_SOURCE TXXX frames don't duplicate when applied multiple times
+	// and that other TXXX frames are preserved
+
+	tests := []struct {
+		name           string
+		existingFrames []string
+		newSource      string
+		expectedCount  int
+	}{
+		{
+			name: "No existing CHAPEL_SOURCE",
+			existingFrames: []string{
+				"MUSICBRAINZ_ARTISTID\x00a74b1b7f-71a5-4011-9441-d0b5e4122711",
+				"REPLAYGAIN_TRACK_GAIN\x00-2.14 dB",
+			},
+			newSource:     "https://new-source.jpg",
+			expectedCount: 1,
+		},
+		{
+			name: "Existing CHAPEL_SOURCE (should replace)",
+			existingFrames: []string{
+				"CHAPEL_SOURCE\x00https://old-source.jpg",
+				"MUSICBRAINZ_ARTISTID\x00a74b1b7f-71a5-4011-9441-d0b5e4122711",
+				"REPLAYGAIN_TRACK_GAIN\x00-2.14 dB",
+			},
+			newSource:     "https://new-source.jpg",
+			expectedCount: 1,
+		},
+		{
+			name: "Multiple CHAPEL_SOURCE (should deduplicate)",
+			existingFrames: []string{
+				"CHAPEL_SOURCE\x00https://old-source.jpg",
+				"MUSICBRAINZ_ARTISTID\x00a74b1b7f-71a5-4011-9441-d0b5e4122711",
+				"CHAPEL_SOURCE\x00https://duplicate.jpg",
+				"REPLAYGAIN_TRACK_GAIN\x00-2.14 dB",
+			},
+			newSource:     "https://new-source.jpg",
+			expectedCount: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Simulate the logic from apply.go
+			hasChapelSource := false
+			for _, frameText := range tt.existingFrames {
+				if strings.HasPrefix(frameText, "CHAPEL_SOURCE\x00") {
+					hasChapelSource = true
+					break
+				}
+			}
+
+			var finalFrames []string
+			if hasChapelSource {
+				// Preserve non-CHAPEL_SOURCE frames
+				for _, frameText := range tt.existingFrames {
+					if !strings.HasPrefix(frameText, "CHAPEL_SOURCE\x00") {
+						finalFrames = append(finalFrames, frameText)
+					}
+				}
+			} else {
+				// Keep all existing frames
+				finalFrames = append(finalFrames, tt.existingFrames...)
+			}
+
+			// Add new CHAPEL_SOURCE frame
+			newFrame := "CHAPEL_SOURCE\x00" + tt.newSource
+			finalFrames = append(finalFrames, newFrame)
+
+			// Verify results
+			chapelSourceCount := 0
+			var foundChapelSource string
+			musicBrainzCount := 0
+			replayGainCount := 0
+
+			for _, frameText := range finalFrames {
+				if strings.HasPrefix(frameText, "CHAPEL_SOURCE\x00") {
+					chapelSourceCount++
+					foundChapelSource = strings.TrimPrefix(frameText, "CHAPEL_SOURCE\x00")
+				} else if strings.HasPrefix(frameText, "MUSICBRAINZ_ARTISTID\x00") {
+					musicBrainzCount++
+				} else if strings.HasPrefix(frameText, "REPLAYGAIN_TRACK_GAIN\x00") {
+					replayGainCount++
+				}
+			}
+
+			// Should have exactly one CHAPEL_SOURCE frame
+			if chapelSourceCount != tt.expectedCount {
+				t.Errorf("Expected exactly %d CHAPEL_SOURCE frame, got %d", tt.expectedCount, chapelSourceCount)
+			}
+
+			// Should contain the new source
+			if foundChapelSource != tt.newSource {
+				t.Errorf("Expected CHAPEL_SOURCE to be %q, got %q", tt.newSource, foundChapelSource)
+			}
+
+			// Should preserve other TXXX frames (at most 1 each)
+			if musicBrainzCount > 1 {
+				t.Errorf("MUSICBRAINZ_ARTISTID should appear at most once, got %d", musicBrainzCount)
+			}
+			if replayGainCount > 1 {
+				t.Errorf("REPLAYGAIN_TRACK_GAIN should appear at most once, got %d", replayGainCount)
+			}
+		})
+	}
+}

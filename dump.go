@@ -160,9 +160,26 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 	if len(pictureFrames) > 0 {
 		if pf, ok := pictureFrames[0].(id3v2.PictureFrame); ok {
 			if len(pf.Picture) > 0 {
-				metadata.Artwork = fmt.Sprintf("data:%s;base64,%s",
-					pf.MimeType,
-					base64.StdEncoding.EncodeToString(pf.Picture))
+				// Check for chapel source in TXXX frames first
+				chapelSource := ""
+				txxxFrames := id3tag.GetFrames("TXXX")
+				for _, frame := range txxxFrames {
+					if tf, ok := frame.(id3v2.TextFrame); ok {
+						if strings.HasPrefix(tf.Text, "CHAPEL_SOURCE\x00") {
+							chapelSource = strings.TrimPrefix(tf.Text, "CHAPEL_SOURCE\x00")
+							break
+						}
+					}
+				}
+
+				// Use chapel source if available, otherwise use data URI
+				if chapelSource != "" {
+					metadata.Artwork = chapelSource
+				} else {
+					metadata.Artwork = fmt.Sprintf("data:%s;base64,%s",
+						pf.MimeType,
+						base64.StdEncoding.EncodeToString(pf.Picture))
+				}
 			}
 		}
 	}
