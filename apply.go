@@ -133,12 +133,12 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 
 	// Set date using TDRC tag (ID3v2.4) and Year for compatibility
 	if metadata.Date != nil && !metadata.Date.Time.IsZero() {
-		dateStr := metadata.Date.String()
-		id3tag.AddTextFrame("TDRC", id3v2.EncodingUTF8, dateStr)
-
-		// Also set Year for ID3v2.3 compatibility
+		// Set Year for ID3v2.3 compatibility. It should be performed before add TDRC
 		yearStr := metadata.Date.Time.Format("2006")
 		id3tag.SetYear(yearStr)
+
+		dateStr := metadata.Date.String()
+		id3tag.AddTextFrame("TDRC", id3v2.EncodingUTF8, dateStr)
 	}
 
 	// Set additional text frames

@@ -255,7 +255,7 @@ func (t *Timestamp) UnmarshalYAML(b []byte) error {
 	}
 
 	for _, format := range formats {
-		if parsedTime, err := time.Parse(format.layout, str); err == nil {
+		if parsedTime, err := time.ParseInLocation(format.layout, str, time.UTC); err == nil {
 			*t = Timestamp{Time: parsedTime, Precision: format.precision}
 			return nil
 		}
