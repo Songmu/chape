@@ -79,30 +79,30 @@ artwork: "cover.jpg"
 lyrics: |
   Chapter content here...
 chapters:
-  - "0:00 Introduction"
-  - "5:30 Chapter 1: Getting Started"
-  - "15:45 Chapter 2: Advanced Topics"
-  - "28:20 Chapter 3: Conclusion"
+- 0:00 Introduction
+- 5:30 Chapter 1: Getting Started
+- 15:45 Chapter 2: Advanced Topics
+- 28:20 Chapter 3: Conclusion
 ```
 
 ### Metadata Fields
 
 | Field | Description | ID3v2 Tag |
 |-------|-------------|-----------|
-| `title` | Song/track title | TIT2 |
-| `artist` | Primary artist | TPE1 |
-| `album` | Album title | TALB |
-| `albumArtist` | Album artist | TPE2 |
-| `date` | Recording date (supports various precision levels) | TDRC |
-| `track` | Track number (current/total) | TRCK |
-| `disc` | Disc number (current/total) | TPOS |
-| `genre` | Music genre | TCON |
-| `comment` | Comments | COMM |
-| `composer` | Composer | TCOM |
-| `publisher` | Publisher | TPUB |
+| `title` | Song/track title (podcast: episode title) | TIT2 |
+| `artist` | Primary artist (podcast: host name) | TPE1 |
+| `album` | Album title (podcast: show name) | TALB |
+| `albumArtist` | Album artist (podcast: network/publisher) | TPE2 |
+| `date` | Recording date | TDRC |
+| `track` | Track number (podcast: episode number) | TRCK |
+| `disc` | Disc number (podcast: season number) | TPOS |
+| `genre` | Music genre (podcast: "Podcast" or category) | TCON |
+| `comment` | Comments (podcast: episode description) | COMM |
+| `composer` | Composer (podcast: producer) | TCOM |
+| `publisher` | Publisher (podcast: network/platform) | TPUB |
 | `bpm` | Beats per minute | TBPM |
 | `artwork` | Artwork (file path, URL, or data URI) | APIC |
-| `lyrics` | Lyrics text | USLT |
+| `lyrics` | Lyrics text (podcast: transcript) | USLT |
 | `chapters` | Chapter markers with timestamps | CHAP |
 
 ### Date Format
@@ -119,9 +119,9 @@ The `date` field supports ISO 8601 format with varying precision:
 Chapters use WebVTT-style time format with titles:
 ```yaml
 chapters:
-  - "0:00 Introduction"
-  - "1:05:30 Long chapter (over 1 hour)"
-  - "1:23.500 Chapter with milliseconds"
+- 0:00 Introduction
+- 1:05:30 Long chapter (over 1 hour)
+- 1:23.500 Chapter with milliseconds
 ```
 
 ### Artwork Sources
@@ -146,10 +146,6 @@ Chapel integrates with your preferred text editor for seamless metadata editing:
 ```bash
 # Uses $EDITOR environment variable
 export EDITOR=nano
-chapel audio.mp3
-
-# Or specify complex editor commands
-export EDITOR="code --wait"
 chapel audio.mp3
 ```
 
