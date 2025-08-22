@@ -269,3 +269,84 @@ func TestTimestamp(t *testing.T) {
 		}
 	}
 }
+
+func TestParseDataURI(t *testing.T) {
+	tests := []struct {
+		input       string
+		expectError bool
+		mimeType    string
+	}{
+		{"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=", false, "image/jpeg"},
+		{"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==", false, "image/png"},
+		{"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", false, "image/gif"},
+		{"invalid-data-uri", true, ""},
+		{"data:image/jpeg,notbase64", true, ""},
+	}
+
+	for _, tt := range tests {
+		data, mimeType, err := parseDataURI(tt.input)
+
+		if tt.expectError {
+			if err == nil {
+				t.Errorf("parseDataURI(%q) should return error", tt.input)
+			}
+			continue
+		}
+
+		if err != nil {
+			t.Errorf("parseDataURI(%q) returned error: %v", tt.input, err)
+			continue
+		}
+
+		if mimeType != tt.mimeType {
+			t.Errorf("parseDataURI(%q) mimeType = %q, want %q", tt.input, mimeType, tt.mimeType)
+		}
+
+		if len(data) == 0 {
+			t.Errorf("parseDataURI(%q) returned empty data", tt.input)
+		}
+	}
+}
+
+func TestParseArtwork(t *testing.T) {
+	// Test data URI
+	dataURI := "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
+	_, mimeType, err := parseArtwork(dataURI)
+	if err != nil {
+		t.Errorf("parseArtwork with data URI failed: %v", err)
+	}
+	if mimeType != "image/jpeg" {
+		t.Errorf("parseArtwork data URI mimeType = %q, want %q", mimeType, "image/jpeg")
+	}
+
+	// Test non-existent file path (should return error)
+	_, _, err = parseArtwork("nonexistent.jpg")
+	if err == nil {
+		t.Error("parseArtwork with nonexistent file should return error")
+	}
+}
+
+func TestGetMimeTypeFromExt(t *testing.T) {
+	tests := []struct {
+		ext      string
+		expected string
+	}{
+		{".jpg", "image/jpeg"},
+		{".jpeg", "image/jpeg"},
+		{".JPG", "image/jpeg"},
+		{".png", "image/png"},
+		{".PNG", "image/png"},
+		{".gif", "image/gif"},
+		{".bmp", "image/bmp"},
+		{".webp", "image/webp"},
+		{".txt", ""},
+		{".unknown", ""},
+	}
+
+	for _, tt := range tests {
+		got := getMimeTypeFromExt(tt.ext)
+		if got != tt.expected {
+			t.Errorf("getMimeTypeFromExt(%q) = %q, want %q", tt.ext, got, tt.expected)
+		}
+	}
+}

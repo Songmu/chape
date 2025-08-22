@@ -1,10 +1,12 @@
 package chapel
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"math"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -176,6 +178,28 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 		})
 	}
 
+	// Set artwork
+	if metadata.Artwork != "" {
+		pictureData, mimeType, err := parseArtwork(metadata.Artwork)
+		if err != nil {
+			return fmt.Errorf("failed to parse artwork: %w", err)
+		}
+
+		if len(pictureData) > 0 {
+			// Delete existing picture frames
+			id3tag.DeleteFrames("APIC")
+
+			pictureFrame := id3v2.PictureFrame{
+				Encoding:    id3v2.EncodingUTF8,
+				MimeType:    mimeType,
+				PictureType: id3v2.PTFrontCover,
+				Description: "",
+				Picture:     pictureData,
+			}
+			id3tag.AddAttachedPicture(pictureFrame)
+		}
+	}
+
 	// Set chapters
 	// First, delete existing chapter frames
 	id3tag.DeleteFrames("CHAP")
@@ -254,4 +278,82 @@ func readMP3Duration(r io.ReadSeeker) (time.Duration, error) {
 	}
 
 	return t, nil
+}
+
+// parseArtwork parses artwork string (data URI or file path) and returns picture data and MIME type
+func parseArtwork(artwork string) ([]byte, string, error) {
+	if strings.HasPrefix(artwork, "data:") {
+		// Parse data URI
+		return parseDataURI(artwork)
+	} else {
+		// Treat as file path
+		return parseFilePath(artwork)
+	}
+}
+
+// parseDataURI parses data URI and returns picture data and MIME type
+func parseDataURI(dataURI string) ([]byte, string, error) {
+	// Format: data:image/jpeg;base64,<base64data>
+	parts := strings.SplitN(dataURI, ",", 2)
+	if len(parts) != 2 {
+		return nil, "", fmt.Errorf("invalid data URI format")
+	}
+
+	header := parts[0]
+	data := parts[1]
+
+	// Extract MIME type from header
+	if !strings.HasPrefix(header, "data:") {
+		return nil, "", fmt.Errorf("invalid data URI header")
+	}
+
+	headerParts := strings.Split(header[5:], ";") // Remove "data:" prefix
+	if len(headerParts) < 2 || headerParts[1] != "base64" {
+		return nil, "", fmt.Errorf("only base64 data URIs are supported")
+	}
+
+	mimeType := headerParts[0]
+
+	// Decode base64 data
+	pictureData, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to decode base64 data: %w", err)
+	}
+
+	return pictureData, mimeType, nil
+}
+
+// parseFilePath parses file path and returns picture data and MIME type
+func parseFilePath(filePath string) ([]byte, string, error) {
+	// Read file
+	pictureData, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read file %s: %w", filePath, err)
+	}
+
+	// Determine MIME type from file extension
+	mimeType := getMimeTypeFromExt(filepath.Ext(filePath))
+	if mimeType == "" {
+		return nil, "", fmt.Errorf("unsupported image format: %s", filepath.Ext(filePath))
+	}
+
+	return pictureData, mimeType, nil
+}
+
+// getMimeTypeFromExt returns MIME type based on file extension
+func getMimeTypeFromExt(ext string) string {
+	switch strings.ToLower(ext) {
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	case ".bmp":
+		return "image/bmp"
+	case ".webp":
+		return "image/webp"
+	default:
+		return ""
+	}
 }
