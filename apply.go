@@ -20,28 +20,30 @@ import (
 )
 
 func (c *Chapel) Apply(input io.Reader) error {
-	// Read YAML from input
-	yamlData, err := io.ReadAll(input)
-	if err != nil {
-		return fmt.Errorf("failed to read input: %w", err)
-	}
-
-	// Parse YAML to metadata
 	var newMetadata Metadata
-	err = yaml.Unmarshal(yamlData, &newMetadata)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal YAML: %w", err)
+	if err := yaml.NewDecoder(input).Decode(&newMetadata); err != nil {
+		return fmt.Errorf("failed to decode YAML: %w", err)
 	}
 
 	// Get current metadata from MP3 file
-	var currentOutput strings.Builder
-	err = c.Dump(&currentOutput)
+	currentMetadata, err := c.getMetadata()
 	if err != nil {
 		return fmt.Errorf("failed to read current metadata: %w", err)
 	}
 
-	currentYAML := currentOutput.String()
-	newYAML := string(yamlData)
+	// Normalize both metadata by marshaling them to YAML
+	currentYAMLData, err := yaml.Marshal(currentMetadata)
+	if err != nil {
+		return fmt.Errorf("failed to marshal current metadata: %w", err)
+	}
+
+	normalizedNewYAMLData, err := yaml.Marshal(&newMetadata)
+	if err != nil {
+		return fmt.Errorf("failed to marshal new metadata: %w", err)
+	}
+
+	currentYAML := string(currentYAMLData)
+	newYAML := string(normalizedNewYAMLData)
 
 	if currentYAML == newYAML {
 		fmt.Println("No changes to apply.")
