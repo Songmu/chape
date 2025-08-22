@@ -10,6 +10,12 @@ comment: "This is a comprehensive test with all metadata fields populated"
 composer: "Jane Smith"
 publisher: "Educational Press"
 bpm: 128
+lyrics: |
+  [00:00] Welcome to our educational program
+  [01:30] Let's begin with the basics
+  [04:45] Moving on to advanced concepts
+  [07:20] Here are some detailed examples
+  [09:10] Thanks for watching
 chapters:
 - "0:00 Welcome"
 - "1:30 Chapter 1: Getting Started"

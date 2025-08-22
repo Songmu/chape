@@ -176,6 +176,8 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	}
 
 	// Set lyrics
+	// First, delete existing lyrics frames
+	id3tag.DeleteFrames("USLT") // Unsynchronised lyrics/text transcription
 	if metadata.Lyrics != "" {
 		id3tag.AddUnsynchronisedLyricsFrame(id3v2.UnsynchronisedLyricsFrame{
 			Encoding: id3v2.EncodingUTF8,

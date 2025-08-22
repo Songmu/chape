@@ -128,7 +128,7 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 	}
 
 	// Lyrics frames
-	lyricsFrames := id3tag.GetFrames(id3tag.CommonID("Lyrics"))
+	lyricsFrames := id3tag.GetFrames("USLT") // Unsynchronised lyrics/text transcription
 	if len(lyricsFrames) > 0 {
 		if ulf, ok := lyricsFrames[0].(id3v2.UnsynchronisedLyricsFrame); ok {
 			metadata.Lyrics = ulf.Lyrics
