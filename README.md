@@ -12,6 +12,8 @@
 
 Chapel is a powerful command-line tool for editing MP3 metadata using YAML format. It provides an intuitive way to manage ID3v2 tags, chapters, and artwork in MP3 files.
 
+[![asciicast](https://asciinema.org/a/B0XoBtk61X4MfsZ0iFhRlWcRj.svg)](https://asciinema.org/a/B0XoBtk61X4MfsZ0iFhRlWcRj)
+
 ## Features
 - **YAML-based metadata editing**: Edit MP3 metadata using familiar YAML syntax
 - **Chapter support**: Manage chapter markers for audiobooks and podcasts
