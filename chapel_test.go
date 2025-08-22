@@ -202,6 +202,23 @@ artwork: "` + artworkPath + `"`
 	// Verify the file was recreated
 	if _, err := os.Stat(artworkPath); os.IsNotExist(err) {
 		t.Errorf("Artwork file should have been recreated at %s", artworkPath)
+	} else {
+		// Verify the recreated file is identical to the original
+		recreatedData, err := os.ReadFile(artworkPath)
+		if err != nil {
+			t.Fatalf("Failed to read recreated artwork file: %v", err)
+		}
+
+		if !bytes.Equal(jpegHeader, recreatedData) {
+			t.Errorf("Recreated artwork file does not match original data")
+			t.Errorf("Original size: %d bytes, Recreated size: %d bytes", len(jpegHeader), len(recreatedData))
+
+			// Show hex dump for debugging if files are small
+			if len(jpegHeader) <= 32 && len(recreatedData) <= 32 {
+				t.Errorf("Original data: % x", jpegHeader)
+				t.Errorf("Recreated data: % x", recreatedData)
+			}
+		}
 	}
 }
 
