@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/goccy/go-yaml"
 )
@@ -20,8 +21,8 @@ func TestMetadataYAMLMarshal(t *testing.T) {
 		Genre:       "Podcast",
 		Chapters: []*Chapter{
 			{Start: 0, Title: "Introduction"},
-			{Start: 90, Title: "Main Topic"},
-			{Start: 945, Title: "Conclusion"},
+			{Start: 90 * time.Second, Title: "Main Topic"},
+			{Start: 945 * time.Second, Title: "Conclusion"},
 		},
 	}
 
@@ -43,64 +44,36 @@ func TestMetadataYAMLMarshal(t *testing.T) {
 		t.Errorf("YAML should contain date")
 	}
 	if !strings.Contains(yamlStr, "- 0:00 Introduction") {
-		t.Errorf("YAML should contain chapters")
+		t.Errorf("YAML should contain chapters with formatted time")
 	}
 }
 
-func TestParseChapter(t *testing.T) {
+func TestChapterString(t *testing.T) {
 	tests := []struct {
-		input     string
-		wantTime  uint64
-		wantTitle string
-		wantErr   bool
+		chapter  *Chapter
+		expected string
 	}{
-		{"0:00 Introduction", 0, "Introduction", false},
-		{"1:30 Main Topic", 90, "Main Topic", false},
-		{"1:02:30 Long Chapter", 3750, "Long Chapter", false},
-		{"invalid", 0, "", true},
-		{"1:30", 0, "", true}, // Missing title
+		// Basic formatting
+		{&Chapter{Start: 0, Title: "Introduction"}, "0:00 Introduction"},
+		{&Chapter{Start: 59 * time.Second, Title: "Test"}, "0:59 Test"},
+		{&Chapter{Start: 60 * time.Second, Title: "Test"}, "1:00 Test"},
+		{&Chapter{Start: 90 * time.Second, Title: "Main Topic"}, "1:30 Main Topic"},
+		{&Chapter{Start: 3599 * time.Second, Title: "Test"}, "59:59 Test"},
+		{&Chapter{Start: 3600 * time.Second, Title: "Test"}, "1:00:00 Test"},
+		{&Chapter{Start: 3661 * time.Second, Title: "Test"}, "1:01:01 Test"},
+		{&Chapter{Start: 7322 * time.Second, Title: "Test"}, "2:02:02 Test"},
+
+		// With milliseconds
+		{&Chapter{Start: 90500 * time.Millisecond, Title: "Main Topic"}, "1:30.500 Main Topic"},
+		{&Chapter{Start: 3750 * time.Second, Title: "Long Chapter"}, "1:02:30 Long Chapter"},
+		{&Chapter{Start: (3750*time.Second + 123*time.Millisecond), Title: "Long Chapter"}, "1:02:30.123 Long Chapter"},
+		{&Chapter{Start: (3661*time.Second + 123*time.Millisecond), Title: "Test"}, "1:01:01.123 Test"},
 	}
 
 	for _, tt := range tests {
-		ch, err := ParseChapter(tt.input)
-		if tt.wantErr {
-			if err == nil {
-				t.Errorf("ParseChapter(%q) should have returned error", tt.input)
-			}
-			continue
-		}
-		if err != nil {
-			t.Errorf("ParseChapter(%q) returned unexpected error: %v", tt.input, err)
-			continue
-		}
-		if ch.Start != tt.wantTime {
-			t.Errorf("ParseChapter(%q) Start = %d, want %d", tt.input, ch.Start, tt.wantTime)
-		}
-		if ch.Title != tt.wantTitle {
-			t.Errorf("ParseChapter(%q) Title = %q, want %q", tt.input, ch.Title, tt.wantTitle)
-		}
-	}
-}
-
-func TestFormatTime(t *testing.T) {
-	tests := []struct {
-		seconds uint64
-		want    string
-	}{
-		{0, "0:00"},
-		{59, "0:59"},
-		{60, "1:00"},
-		{90, "1:30"},
-		{3599, "59:59"},
-		{3600, "1:00:00"},
-		{3661, "1:01:01"},
-		{7322, "2:02:02"},
-	}
-
-	for _, tt := range tests {
-		got := FormatTime(tt.seconds)
-		if got != tt.want {
-			t.Errorf("FormatTime(%d) = %q, want %q", tt.seconds, got, tt.want)
+		got := tt.chapter.String()
+		if got != tt.expected {
+			t.Errorf("Chapter.String() = %q, want %q", got, tt.expected)
 		}
 	}
 }
@@ -115,34 +88,57 @@ func TestDumpWithoutFile(t *testing.T) {
 }
 
 func TestChapterMarshalYAML(t *testing.T) {
-	chapter := &Chapter{Start: 90, Title: "Main Topic"}
-
-	yamlData, err := yaml.Marshal(chapter)
-	if err != nil {
-		t.Fatalf("Failed to marshal chapter: %v", err)
+	tests := []struct {
+		chapter  *Chapter
+		expected string
+	}{
+		{&Chapter{Start: 90 * time.Second, Title: "Main Topic"}, "1:30 Main Topic\n"},
+		{&Chapter{Start: 90500 * time.Millisecond, Title: "Main Topic"}, "1:30.500 Main Topic\n"},
+		{&Chapter{Start: 0, Title: "Introduction"}, "0:00 Introduction\n"},
 	}
 
-	yamlStr := string(yamlData)
-	expected := "1:30 Main Topic\n"
-	if yamlStr != expected {
-		t.Errorf("Expected %q, got %q", expected, yamlStr)
+	for _, tt := range tests {
+		yamlData, err := yaml.Marshal(tt.chapter)
+		if err != nil {
+			t.Fatalf("Failed to marshal chapter: %v", err)
+		}
+
+		yamlStr := string(yamlData)
+		if yamlStr != tt.expected {
+			t.Errorf("Expected %q, got %q", tt.expected, yamlStr)
+		}
 	}
 }
 
 func TestChapterUnmarshalYAML(t *testing.T) {
-	yamlStr := "1:30 Main Topic"
-	var chapter Chapter
-
-	err := yaml.Unmarshal([]byte(yamlStr), &chapter)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal chapter: %v", err)
+	tests := []struct {
+		yamlStr   string
+		wantStart time.Duration
+		wantTitle string
+	}{
+		{"1:30 Main Topic", 90 * time.Second, "Main Topic"},
+		{"1:30.500 Main Topic", 90500 * time.Millisecond, "Main Topic"},
+		{"0:00 Introduction", 0, "Introduction"},
+		// Test millisecond padding behavior
+		{"1:30.5 Main Topic", 500*time.Millisecond + 90*time.Second, "Main Topic"},    // .5 → .500
+		{"1:30.12 Main Topic", 120*time.Millisecond + 90*time.Second, "Main Topic"},   // .12 → .120
+		{"1:30.1234 Main Topic", 123*time.Millisecond + 90*time.Second, "Main Topic"}, // .1234 → .123 (truncated)
+		{"0:05.05 Short", 5050 * time.Millisecond, "Short"},                           // .05 → .050
 	}
 
-	if chapter.Start != 90 {
-		t.Errorf("Expected start time 90, got %d", chapter.Start)
-	}
-	if chapter.Title != "Main Topic" {
-		t.Errorf("Expected title 'Main Topic', got %q", chapter.Title)
+	for _, tt := range tests {
+		var chapter Chapter
+		err := yaml.Unmarshal([]byte(tt.yamlStr), &chapter)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal chapter: %v", err)
+		}
+
+		if chapter.Start != tt.wantStart {
+			t.Errorf("Expected start time %v, got %v", tt.wantStart, chapter.Start)
+		}
+		if chapter.Title != tt.wantTitle {
+			t.Errorf("Expected title %q, got %q", tt.wantTitle, chapter.Title)
+		}
 	}
 }
 

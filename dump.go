@@ -118,7 +118,7 @@ func (c *Chapel) Dump(output io.Writer) error {
 		if cf, ok := frame.(id3v2.ChapterFrame); ok {
 			chapter := &Chapter{
 				Title: cf.Title.Text,
-				Start: uint64(cf.StartTime.Seconds()),
+				Start: cf.StartTime,
 			}
 			metadata.Chapters = append(metadata.Chapters, chapter)
 		}

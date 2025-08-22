@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/goccy/go-yaml/token"
 )
@@ -31,25 +32,37 @@ type Metadata struct {
 
 // Chapter represents a single chapter with start time and title
 type Chapter struct {
-	Title string `json:"title"`
-	Start uint64 `json:"start"`
+	Title string        `json:"title"`
+	Start time.Duration `json:"start"`
 }
 
-// FormatTime formats seconds to time string
-func FormatTime(seconds uint64) string {
-	hours := seconds / 3600
-	minutes := (seconds % 3600) / 60
-	secs := seconds % 60
-
-	if hours > 0 {
-		return fmt.Sprintf("%d:%02d:%02d", hours, minutes, secs)
-	}
-	return fmt.Sprintf("%d:%02d", minutes, secs)
-}
-
-// String returns the chapter as a string
+// String returns the chapter as a string in WebVTT format
 func (c *Chapter) String() string {
-	return fmt.Sprintf("%s %s", FormatTime(c.Start), c.Title)
+	// Format duration to WebVTT time string
+	ms := c.Start.Milliseconds()
+	hours := ms / 3600000
+	minutes := (ms % 3600000) / 60000
+	seconds := (ms % 60000) / 1000
+	millis := ms % 1000
+
+	var timeStr string
+	// Format without milliseconds if they are zero
+	if millis == 0 {
+		if hours > 0 {
+			timeStr = fmt.Sprintf("%d:%02d:%02d", hours, minutes, seconds)
+		} else {
+			timeStr = fmt.Sprintf("%d:%02d", minutes, seconds)
+		}
+	} else {
+		// Format with milliseconds
+		if hours > 0 {
+			timeStr = fmt.Sprintf("%d:%02d:%02d.%03d", hours, minutes, seconds, millis)
+		} else {
+			timeStr = fmt.Sprintf("%d:%02d.%03d", minutes, seconds, millis)
+		}
+	}
+
+	return fmt.Sprintf("%s %s", timeStr, c.Title)
 }
 
 // MarshalYAML marshals the chapter to YAML format
@@ -68,64 +81,82 @@ func (c *Chapter) UnmarshalYAML(b []byte) error {
 	if len(stuff) != 2 {
 		return fmt.Errorf("invalid chapter format: %s", str)
 	}
-	start, err := convertStringToStart(stuff[0])
-	if err != nil {
-		return fmt.Errorf("invalid chapter format: %s, %w", str, err)
+
+	// Parse WebVTT time format
+	timeStr := stuff[0]
+	colonParts := strings.Split(timeStr, ":")
+	if len(colonParts) < 2 || len(colonParts) > 3 {
+		return fmt.Errorf("invalid time format: %s", timeStr)
 	}
+
+	var hours, minutes int
+	var secondsStr string
+
+	if len(colonParts) == 3 {
+		// Format: H:MM:SS.mmm
+		h, err := strconv.Atoi(colonParts[0])
+		if err != nil {
+			return fmt.Errorf("invalid hours: %s", colonParts[0])
+		}
+		hours = h
+
+		m, err := strconv.Atoi(colonParts[1])
+		if err != nil {
+			return fmt.Errorf("invalid minutes: %s", colonParts[1])
+		}
+		minutes = m
+		secondsStr = colonParts[2]
+	} else {
+		// Format: M:SS.mmm or MM:SS.mmm
+		m, err := strconv.Atoi(colonParts[0])
+		if err != nil {
+			return fmt.Errorf("invalid minutes: %s", colonParts[0])
+		}
+		minutes = m
+		secondsStr = colonParts[1]
+	}
+
+	// Parse seconds and milliseconds
+	var seconds int
+	var millis int
+
+	if strings.Contains(secondsStr, ".") {
+		parts := strings.Split(secondsStr, ".")
+		s, err := strconv.Atoi(parts[0])
+		if err != nil {
+			return fmt.Errorf("invalid seconds: %s", parts[0])
+		}
+		seconds = s
+
+		if len(parts[1]) > 0 {
+			// Pad or trim to 3 digits for milliseconds
+			msStr := parts[1]
+			if len(msStr) > 3 {
+				msStr = msStr[:3]
+			} else {
+				msStr = msStr + strings.Repeat("0", 3-len(msStr))
+			}
+			ms, err := strconv.Atoi(msStr)
+			if err != nil {
+				return fmt.Errorf("invalid milliseconds: %s", parts[1])
+			}
+			millis = ms
+		}
+	} else {
+		s, err := strconv.Atoi(secondsStr)
+		if err != nil {
+			return fmt.Errorf("invalid seconds: %s", secondsStr)
+		}
+		seconds = s
+	}
+
+	totalMs := int64(hours)*3600000 + int64(minutes)*60000 + int64(seconds)*1000 + int64(millis)
+
 	*c = Chapter{
 		Title: stuff[1],
-		Start: start,
+		Start: time.Duration(totalMs) * time.Millisecond,
 	}
 	return nil
-}
-
-// ParseChapter parses a chapter string like "0:00 Intro" (for testing compatibility)
-func ParseChapter(s string) (*Chapter, error) {
-	var chapter Chapter
-	err := chapter.UnmarshalYAML([]byte(s))
-	if err != nil {
-		return nil, err
-	}
-	return &chapter, nil
-}
-
-// convertStringToStart converts time string to seconds (podbard compatible)
-func convertStringToStart(str string) (uint64, error) {
-	if l := len(strings.Split(str, ":")); l > 3 {
-		return 0, fmt.Errorf("invalid time format: %s", str)
-	} else if l == 2 {
-		str = "0:" + str
-	}
-
-	parts := strings.Split(str, ":")
-	var hours, minutes, seconds uint64
-	var err error
-
-	if len(parts) >= 3 {
-		hours, err = strconv.ParseUint(parts[0], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		minutes, err = strconv.ParseUint(parts[1], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		seconds, err = strconv.ParseUint(parts[2], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-	} else if len(parts) == 2 {
-		minutes, err = strconv.ParseUint(parts[0], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		seconds, err = strconv.ParseUint(parts[1], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	return hours*3600 + minutes*60 + seconds, nil
 }
 
 // unquote removes quotes from a string, handling both single and double quotes

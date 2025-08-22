@@ -192,12 +192,12 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 
 	for i, chapter := range metadata.Chapters {
 		// Create proper chapter frame
-		startTime := time.Duration(chapter.Start) * time.Second
+		startTime := chapter.Start
 		var endTime time.Duration
 
 		// Set end time to next chapter's start time or audio duration for last chapter
 		if i+1 < len(metadata.Chapters) {
-			endTime = time.Duration(metadata.Chapters[i+1].Start) * time.Second
+			endTime = metadata.Chapters[i+1].Start
 		} else {
 			endTime = audioDuration // Use actual audio duration for last chapter
 		}
