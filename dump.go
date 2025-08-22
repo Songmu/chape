@@ -21,32 +21,6 @@ func (c *Chapel) Dump(output io.Writer) error {
 		return err
 	}
 
-	// Handle artwork if specified in Chapel struct
-	if c.artwork != "" {
-		if strings.HasPrefix(c.artwork, "http://") || strings.HasPrefix(c.artwork, "https://") {
-			// If it's a URL, use it as-is
-			metadata.Artwork = c.artwork
-		} else {
-			// If it's a file path
-			if _, err := os.Stat(c.artwork); os.IsNotExist(err) {
-				// File doesn't exist, try to extract artwork from MP3
-				if metadata.Artwork != "" && strings.HasPrefix(metadata.Artwork, "data:") {
-					// Extract and save the artwork
-					if err := c.extractArtworkToFile(metadata.Artwork, c.artwork); err != nil {
-						return fmt.Errorf("failed to extract artwork: %w", err)
-					}
-					// Update metadata to use the file path
-					metadata.Artwork = c.artwork
-				}
-			} else if err == nil {
-				// File exists, use it as-is (don't overwrite)
-				metadata.Artwork = c.artwork
-			} else {
-				return fmt.Errorf("failed to stat artwork file: %w", err)
-			}
-		}
-	}
-
 	yamlData, err := yaml.Marshal(metadata)
 	if err != nil {
 		return fmt.Errorf("failed to marshal to YAML: %w", err)
@@ -155,30 +129,34 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 		}
 	}
 
-	// Picture frames
-	pictureFrames := id3tag.GetFrames(id3tag.CommonID("Attached picture"))
-	if len(pictureFrames) > 0 {
-		if pf, ok := pictureFrames[0].(id3v2.PictureFrame); ok {
-			if len(pf.Picture) > 0 {
-				// Check for chapel source in TXXX frames first
-				chapelSource := ""
-				txxxFrames := id3tag.GetFrames("TXXX")
-				for _, frame := range txxxFrames {
-					if tf, ok := frame.(id3v2.TextFrame); ok {
-						if strings.HasPrefix(tf.Text, "CHAPEL_SOURCE\x00") {
-							chapelSource = strings.TrimPrefix(tf.Text, "CHAPEL_SOURCE\x00")
-							break
+	// Priority: Chapel struct artwork > CHAPEL_SOURCE from MP3
+	if c.artwork != "" {
+		metadata.Artwork = c.artwork
+	} else {
+		pictureFrames := id3tag.GetFrames(id3tag.CommonID("Attached picture"))
+		if len(pictureFrames) > 0 {
+			if pf, ok := pictureFrames[0].(id3v2.PictureFrame); ok {
+				if len(pf.Picture) > 0 {
+					// Check for chapel source in TXXX frames first
+					chapelSource := ""
+					txxxFrames := id3tag.GetFrames("TXXX")
+					for _, frame := range txxxFrames {
+						if tf, ok := frame.(id3v2.TextFrame); ok {
+							s, found := strings.CutPrefix(tf.Text, "CHAPEL_SOURCE\x00")
+							if found {
+								chapelSource = s
+								break
+							}
 						}
 					}
-				}
-
-				// Use chapel source if available, otherwise use data URI
-				if chapelSource != "" {
-					metadata.Artwork = chapelSource
-				} else {
-					metadata.Artwork = fmt.Sprintf("data:%s;base64,%s",
-						pf.MimeType,
-						base64.StdEncoding.EncodeToString(pf.Picture))
+					// Store chapel source and raw picture data for later processing
+					if chapelSource != "" {
+						metadata.Artwork = chapelSource
+					} else {
+						metadata.Artwork = fmt.Sprintf("data:%s;base64,%s",
+							pf.MimeType,
+							base64.StdEncoding.EncodeToString(pf.Picture))
+					}
 				}
 			}
 		}
@@ -199,7 +177,68 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 		return cmp.Compare(a.Start, b.Start)
 	})
 
+	// Override artwork with Chapel struct setting if specified
+	if c.artwork != "" {
+		metadata.Artwork = c.artwork
+	}
+
+	// Apply artwork processing (file creation, etc.)
+	if err := c.processArtwork(metadata); err != nil {
+		return nil, fmt.Errorf("failed to process artwork: %w", err)
+	}
+
 	return metadata, nil
+}
+
+// processArtwork handles artwork processing logic shared between Dump and Apply
+func (c *Chapel) processArtwork(metadata *Metadata) error {
+	aw := metadata.Artwork
+	if aw != "" {
+		if !strings.HasPrefix(aw, "http://") && !strings.HasPrefix(aw, "https://") &&
+			!strings.HasPrefix(aw, "data:") {
+			// Local file path - check if file exists
+			if _, err := os.Stat(aw); os.IsNotExist(err) {
+				// File doesn't exist, try to extract from embedded artwork
+				// Need to get embedded artwork data from MP3
+				embeddedDataURI, err := c.getEmbeddedArtwork()
+				if err != nil {
+					return fmt.Errorf("failed to get embedded artwork: %w", err)
+				}
+				if embeddedDataURI != "" {
+					// Extract from embedded data URI
+					// XXX: How do we handle file extension mismatch?
+					if err := c.extractArtworkToFile(embeddedDataURI, aw); err != nil {
+						return fmt.Errorf("failed to extract artwork: %w", err)
+					}
+				}
+			} else if err != nil {
+				return fmt.Errorf("failed to check artwork file: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+// getEmbeddedArtwork extracts embedded artwork from MP3 as data URI
+func (c *Chapel) getEmbeddedArtwork() (string, error) {
+	id3tag, err := id3v2.Open(c.audio, id3v2.Options{Parse: true})
+	if err != nil {
+		return "", err
+	}
+	defer id3tag.Close()
+
+	// Picture frames
+	pictureFrames := id3tag.GetFrames(id3tag.CommonID("Attached picture"))
+	if len(pictureFrames) > 0 {
+		if pf, ok := pictureFrames[0].(id3v2.PictureFrame); ok {
+			if len(pf.Picture) > 0 {
+				return fmt.Sprintf("data:%s;base64,%s",
+					pf.MimeType,
+					base64.StdEncoding.EncodeToString(pf.Picture)), nil
+			}
+		}
+	}
+	return "", nil
 }
 
 // extractArtworkToFile extracts artwork from data URI and saves to file
