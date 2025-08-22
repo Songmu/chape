@@ -28,6 +28,8 @@ func Run(ctx context.Context, argv []string, outStream, errStream io.Writer) err
 		formatCommands(fs.Output())
 	}
 	ver := fs.Bool("version", false, "display version")
+	var artworkPath string
+	fs.StringVar(&artworkPath, "artwork", "", "path or URL for artwork (extracts from MP3 if file doesn't exist)")
 	if err := fs.Parse(argv); err != nil {
 		return err
 	}
@@ -39,7 +41,7 @@ func Run(ctx context.Context, argv []string, outStream, errStream io.Writer) err
 		return fmt.Errorf("no args specified")
 	}
 	if strings.HasSuffix(argv[0], ".mp3") {
-		return chapel.New(argv[0]).Edit()
+		return chapel.New(argv[0], artworkPath).Edit()
 	}
 	if cmd, ok := cmder.dispatch[argv[0]]; ok {
 		return cmd.Run(ctx, argv[1:], outStream, errStream)

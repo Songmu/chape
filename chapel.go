@@ -11,13 +11,18 @@ import (
 )
 
 type Chapel struct {
-	audio string
+	audio   string
+	artwork string
 }
 
-func New(audio string) *Chapel {
-	return &Chapel{
+func New(audio string, artwork ...string) *Chapel {
+	c := &Chapel{
 		audio: audio,
 	}
+	if len(artwork) > 0 {
+		c.artwork = artwork[0]
+	}
+	return c
 }
 
 func (c *Chapel) Edit() error {
@@ -29,7 +34,7 @@ func (c *Chapel) Edit() error {
 	defer os.Remove(tempFile.Name())
 	defer tempFile.Close()
 
-	// Dump current metadata to temp file
+	// Dump current metadata to temp file with artwork handling
 	err = c.Dump(tempFile)
 	if err != nil {
 		return fmt.Errorf("failed to dump metadata: %w", err)

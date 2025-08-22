@@ -6,24 +6,67 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/bogem/id3v2/v2"
 	"github.com/goccy/go-yaml"
 )
 
 func (c *Chapel) Dump(output io.Writer) error {
+	metadata, err := c.getMetadata()
+	if err != nil {
+		return err
+	}
+
+	// Handle artwork if specified in Chapel struct
+	if c.artwork != "" {
+		if strings.HasPrefix(c.artwork, "http://") || strings.HasPrefix(c.artwork, "https://") {
+			// If it's a URL, use it as-is
+			metadata.Artwork = c.artwork
+		} else {
+			// If it's a file path
+			if _, err := os.Stat(c.artwork); os.IsNotExist(err) {
+				// File doesn't exist, try to extract artwork from MP3
+				if metadata.Artwork != "" && strings.HasPrefix(metadata.Artwork, "data:") {
+					// Extract and save the artwork
+					if err := c.extractArtworkToFile(metadata.Artwork, c.artwork); err != nil {
+						return fmt.Errorf("failed to extract artwork: %w", err)
+					}
+					// Update metadata to use the file path
+					metadata.Artwork = c.artwork
+				}
+			} else if err == nil {
+				// File exists, use it as-is (don't overwrite)
+				metadata.Artwork = c.artwork
+			} else {
+				return fmt.Errorf("failed to stat artwork file: %w", err)
+			}
+		}
+	}
+
+	yamlData, err := yaml.Marshal(metadata)
+	if err != nil {
+		return fmt.Errorf("failed to marshal to YAML: %w", err)
+	}
+	_, err = output.Write(yamlData)
+	return err
+}
+
+// getMetadata extracts metadata from the MP3 file
+func (c *Chapel) getMetadata() (*Metadata, error) {
 	// Open the MP3 file
 	file, err := os.Open(c.audio)
 	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
+		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
 	id3tag, err := id3v2.Open(c.audio, id3v2.Options{Parse: true})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer id3tag.Close()
 
@@ -139,10 +182,43 @@ func (c *Chapel) Dump(output io.Writer) error {
 		return cmp.Compare(a.Start, b.Start)
 	})
 
-	yamlData, err := yaml.Marshal(metadata)
+	return metadata, nil
+}
+
+// extractArtworkToFile extracts artwork from data URI and saves to file
+func (c *Chapel) extractArtworkToFile(dataURI, outputPath string) error {
+	// Parse data URI
+	pictureData, mimeType, err := parseDataURI(dataURI)
 	if err != nil {
-		return fmt.Errorf("failed to marshal to YAML: %w", err)
+		return err
 	}
-	_, err = output.Write(yamlData)
-	return err
+
+	// Determine file extension from MIME type if outputPath doesn't have one
+	if filepath.Ext(outputPath) == "" {
+		ext := getExtFromMimeType(mimeType)
+		if ext != "" {
+			outputPath = outputPath + ext
+		}
+	}
+
+	// Write to file
+	return os.WriteFile(outputPath, pictureData, 0644)
+}
+
+// getExtFromMimeType returns file extension for a MIME type
+func getExtFromMimeType(mimeType string) string {
+	switch mimeType {
+	case "image/jpeg":
+		return ".jpg"
+	case "image/png":
+		return ".png"
+	case "image/gif":
+		return ".gif"
+	case "image/bmp":
+		return ".bmp"
+	case "image/webp":
+		return ".webp"
+	default:
+		return ""
+	}
 }

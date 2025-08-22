@@ -382,3 +382,43 @@ func TestGetMimeTypeFromExt(t *testing.T) {
 		}
 	}
 }
+
+func TestGetExtFromMimeType(t *testing.T) {
+	tests := []struct {
+		mimeType string
+		expected string
+	}{
+		{"image/jpeg", ".jpg"},
+		{"image/png", ".png"},
+		{"image/gif", ".gif"},
+		{"image/bmp", ".bmp"},
+		{"image/webp", ".webp"},
+		{"text/plain", ""},
+		{"unknown/type", ""},
+	}
+
+	for _, tt := range tests {
+		got := getExtFromMimeType(tt.mimeType)
+		if got != tt.expected {
+			t.Errorf("getExtFromMimeType(%q) = %q, want %q", tt.mimeType, got, tt.expected)
+		}
+	}
+}
+
+func TestDumpWithArtwork(t *testing.T) {
+	var buf bytes.Buffer
+
+	// Test with HTTP URL
+	c := New("nonexistent.mp3", "https://example.com/cover.jpg")
+	err := c.Dump(&buf)
+	if err == nil {
+		t.Error("Dump should return error for nonexistent file")
+	}
+
+	// Test with file path that doesn't exist
+	c = New("nonexistent.mp3", "/tmp/test-artwork.jpg")
+	err = c.Dump(&buf)
+	if err == nil {
+		t.Error("Dump should return error for nonexistent file")
+	}
+}
