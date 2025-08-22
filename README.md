@@ -176,6 +176,8 @@ chapel --artwork https://example.com/new-cover.jpg audio.mp3
 ## Installation
 
 ```console
+% brew install Songmu/tap/chapel
+
 # Install the latest version. (Install it into ./bin/ by default).
 % curl -sfL https://raw.githubusercontent.com/Songmu/chapel/main/install.sh | sh -s
 
