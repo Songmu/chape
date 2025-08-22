@@ -36,12 +36,19 @@ func (c *Chapel) Dump(output io.Writer) error {
 
 	// Try to get date from TDRC (ID3v2.4) or fall back to Year
 	if dateFramer := id3tag.GetLastFrame("TDRC"); dateFramer != nil {
-		if tf, ok := dateFramer.(id3v2.TextFrame); ok {
-			metadata.Date = tf.Text
+		if tf, ok := dateFramer.(id3v2.TextFrame); ok && tf.Text != "" {
+			// Parse TDRC format
+			var ts Timestamp
+			if err := ts.UnmarshalYAML([]byte(tf.Text)); err == nil {
+				metadata.Date = &ts
+			}
 		}
 	} else if id3tag.Year() != "" {
 		// Fall back to Year for ID3v2.3 compatibility
-		metadata.Date = id3tag.Year()
+		var ts Timestamp
+		if err := ts.UnmarshalYAML([]byte(id3tag.Year())); err == nil {
+			metadata.Date = &ts
+		}
 	}
 
 	// Get additional metadata from specific frames

@@ -17,8 +17,8 @@ properties:
     description: Album artist or main performer. For podcasts, this is the main podcast creator or network.
   date:
     type: string
-    pattern: '^\d{4}(-\d{2})?(-\d{2})?$'
-    description: Release or publication date in YYYY, YYYY-MM, or YYYY-MM-DD format. For podcasts, this is the episode publication date.
+    pattern: '^\d{4}(-\d{2}(-\d{2}(T\d{2}(:\d{2}(:\d{2})?)?)?)?)?$'
+    description: Recording time in ID3v2 timestamp format (subset of ISO 8601). Supports yyyy, yyyy-MM, yyyy-MM-dd, yyyy-MM-ddTHH, yyyy-MM-ddTHH:mm, yyyy-MM-ddTHH:mm:ss. All timestamps are UTC. For podcasts, this is the episode recording or publication date.
   track:
     type: string
     pattern: '^\d+(/\d+)?$'

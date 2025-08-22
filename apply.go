@@ -124,15 +124,13 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	}
 
 	// Set date using TDRC tag (ID3v2.4) and Year for compatibility
-	if metadata.Date != "" {
-		id3tag.AddTextFrame("TDRC", id3v2.EncodingUTF8, metadata.Date)
+	if metadata.Date != nil && !metadata.Date.Time.IsZero() {
+		dateStr := metadata.Date.String()
+		id3tag.AddTextFrame("TDRC", id3v2.EncodingUTF8, dateStr)
 
 		// Also set Year for ID3v2.3 compatibility
-		// Extract year part from date (supports YYYY, YYYY-MM, YYYY-MM-DD formats)
-		if len(metadata.Date) >= 4 {
-			yearStr := metadata.Date[:4]
-			id3tag.SetYear(yearStr)
-		}
+		yearStr := metadata.Date.Time.Format("2006")
+		id3tag.SetYear(yearStr)
 	}
 
 	// Set additional text frames

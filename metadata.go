@@ -15,7 +15,7 @@ type Metadata struct {
 	Artist      string       `yaml:"artist"`                // TPE1 tag (Lead performer(s)/Soloist(s))
 	Album       string       `yaml:"album"`                 // TALB tag (Album/Movie/Show title)
 	AlbumArtist string       `yaml:"albumArtist,omitempty"` // TPE2 tag (Band/orchestra/accompaniment)
-	Date        string       `yaml:"date,omitempty"`        // TDRC tag for ID3v2.4 (Recording time)
+	Date        *Timestamp   `yaml:"date,omitempty"`        // TDRC tag for ID3v2.4 (Recording time)
 	Track       *NumberInSet `yaml:"track,omitempty"`       // TRCK tag (Track number/Position in set)
 	Disc        *NumberInSet `yaml:"disc,omitempty"`        // TPOS tag (Part of a set)
 	Genre       string       `yaml:"genre,omitempty"`       // TCON tag (Content type/Genre)
@@ -33,6 +33,26 @@ type NumberInSet struct {
 	Current int
 	Total   int
 }
+
+// Timestamp wraps time.Time for ID3v2 timestamp format as defined in ID3v2.4.0-structure.
+// The timestamp fields are based on a subset of ISO 8601 and can have varying levels of precision.
+// All time stamps are UTC. Valid formats: yyyy, yyyy-MM, yyyy-MM-dd, yyyy-MM-ddTHH, yyyy-MM-ddTHH:mm, yyyy-MM-ddTHH:mm:ss
+type Timestamp struct {
+	time.Time
+	Precision Precision
+}
+
+// Precision represents the precision level of the timestamp
+type Precision int
+
+const (
+	PrecisionYear Precision = iota
+	PrecisionMonth
+	PrecisionDay
+	PrecisionHour
+	PrecisionMinute
+	PrecisionSecond
+)
 
 // Chapter represents a single chapter with start time and title
 type Chapter struct {
@@ -182,6 +202,66 @@ func (n *NumberInSet) UnmarshalYAML(b []byte) error {
 	current, total := parseNumberPair(str)
 	*n = NumberInSet{Current: current, Total: total}
 	return nil
+}
+
+// String returns timestamp in ID3v2 format
+func (t *Timestamp) String() string {
+	if t.Time.IsZero() {
+		return ""
+	}
+
+	switch t.Precision {
+	case PrecisionYear:
+		return t.Time.Format("2006")
+	case PrecisionMonth:
+		return t.Time.Format("2006-01")
+	case PrecisionDay:
+		return t.Time.Format("2006-01-02")
+	case PrecisionHour:
+		return t.Time.UTC().Format("2006-01-02T15")
+	case PrecisionMinute:
+		return t.Time.UTC().Format("2006-01-02T15:04")
+	case PrecisionSecond:
+		return t.Time.UTC().Format("2006-01-02T15:04:05")
+	default:
+		return t.Time.Format("2006")
+	}
+}
+
+// MarshalYAML marshals timestamp to YAML format
+func (t *Timestamp) MarshalYAML() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+// UnmarshalYAML unmarshals timestamp from YAML format
+func (t *Timestamp) UnmarshalYAML(b []byte) error {
+	str := unquote(strings.TrimSpace(string(b)))
+	if str == "" {
+		*t = Timestamp{}
+		return nil
+	}
+
+	// Try parsing different precision levels
+	formats := []struct {
+		layout    string
+		precision Precision
+	}{
+		{"2006-01-02T15:04:05", PrecisionSecond},
+		{"2006-01-02T15:04", PrecisionMinute},
+		{"2006-01-02T15", PrecisionHour},
+		{"2006-01-02", PrecisionDay},
+		{"2006-01", PrecisionMonth},
+		{"2006", PrecisionYear},
+	}
+
+	for _, format := range formats {
+		if parsedTime, err := time.Parse(format.layout, str); err == nil {
+			*t = Timestamp{Time: parsedTime, Precision: format.precision}
+			return nil
+		}
+	}
+
+	return fmt.Errorf("invalid timestamp format: %s", str)
 }
 
 // parseNumberPair parses strings like "1" or "1/10" and returns current and total values

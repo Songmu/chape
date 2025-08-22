@@ -10,12 +10,13 @@ import (
 )
 
 func TestMetadataYAMLMarshal(t *testing.T) {
+	date2024, _ := time.Parse("2006", "2024")
 	metadata := &Metadata{
 		Title:       "Test Song",
 		Artist:      "Test Artist",
 		Album:       "Test Album",
 		AlbumArtist: "Test Album Artist",
-		Date:        "2024",
+		Date:        &Timestamp{Time: date2024, Precision: PrecisionYear},
 		Track:       &NumberInSet{Current: 1, Total: 10},
 		Genre:       "Podcast",
 		Chapters: []*Chapter{
@@ -39,7 +40,7 @@ func TestMetadataYAMLMarshal(t *testing.T) {
 	if !strings.Contains(yamlStr, "artist: Test Artist") {
 		t.Errorf("YAML should contain artist")
 	}
-	if !strings.Contains(yamlStr, "date: \"2024\"") {
+	if !strings.Contains(yamlStr, "date: 2024") {
 		t.Errorf("YAML should contain date")
 	}
 	if !strings.Contains(yamlStr, "track: 1/10") {
@@ -219,6 +220,52 @@ func TestNumberInSet(t *testing.T) {
 		if unmarshaled.Current != tt.input.Current || unmarshaled.Total != tt.input.Total {
 			t.Errorf("Unmarshal failed: got Current=%d, Total=%d, want Current=%d, Total=%d",
 				unmarshaled.Current, unmarshaled.Total, tt.input.Current, tt.input.Total)
+		}
+	}
+}
+
+func TestTimestamp(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected *Timestamp
+		output   string
+	}{
+		{"2024", &Timestamp{Time: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), Precision: PrecisionYear}, "2024"},
+		{"2024-08", &Timestamp{Time: time.Date(2024, 8, 1, 0, 0, 0, 0, time.UTC), Precision: PrecisionMonth}, "2024-08"},
+		{"2024-08-15", &Timestamp{Time: time.Date(2024, 8, 15, 0, 0, 0, 0, time.UTC), Precision: PrecisionDay}, "2024-08-15"},
+		{"2024-08-15T14", &Timestamp{Time: time.Date(2024, 8, 15, 14, 0, 0, 0, time.UTC), Precision: PrecisionHour}, "2024-08-15T14"},
+		{"2024-08-15T14:30", &Timestamp{Time: time.Date(2024, 8, 15, 14, 30, 0, 0, time.UTC), Precision: PrecisionMinute}, "2024-08-15T14:30"},
+		{"2024-08-15T14:30:45", &Timestamp{Time: time.Date(2024, 8, 15, 14, 30, 45, 0, time.UTC), Precision: PrecisionSecond}, "2024-08-15T14:30:45"},
+	}
+
+	for _, tt := range tests {
+		// Test unmarshaling
+		var ts Timestamp
+		err := ts.UnmarshalYAML([]byte(tt.input))
+		if err != nil {
+			t.Fatalf("Failed to unmarshal Timestamp %q: %v", tt.input, err)
+		}
+
+		if !ts.Time.Equal(tt.expected.Time) || ts.Precision != tt.expected.Precision {
+			t.Errorf("Unmarshal %q: got Time=%v, Precision=%v, want Time=%v, Precision=%v",
+				tt.input, ts.Time, ts.Precision, tt.expected.Time, tt.expected.Precision)
+		}
+
+		// Test marshaling
+		got := ts.String()
+		if got != tt.output {
+			t.Errorf("Timestamp.String() = %q, want %q", got, tt.output)
+		}
+
+		// Test YAML round-trip
+		yamlData, err := yaml.Marshal(&ts)
+		if err != nil {
+			t.Fatalf("Failed to marshal Timestamp: %v", err)
+		}
+
+		yamlStr := strings.TrimSpace(string(yamlData))
+		if yamlStr != tt.output {
+			t.Errorf("YAML marshal = %q, want %q", yamlStr, tt.output)
 		}
 	}
 }
