@@ -8,7 +8,6 @@ import (
 	"os"
 	"slices"
 	"strconv"
-	"strings"
 
 	"github.com/bogem/id3v2/v2"
 	"github.com/goccy/go-yaml"
@@ -74,13 +73,19 @@ func (c *Chapel) Dump(output io.Writer) error {
 
 	if trackFramer := id3tag.GetLastFrame("TRCK"); trackFramer != nil {
 		if tf, ok := trackFramer.(id3v2.TextFrame); ok {
-			parseTrack(tf.Text, metadata)
+			current, total := parseNumberPair(tf.Text)
+			if current > 0 {
+				metadata.Track = &NumberInSet{Current: current, Total: total}
+			}
 		}
 	}
 
 	if discFramer := id3tag.GetLastFrame("TPOS"); discFramer != nil {
 		if tf, ok := discFramer.(id3v2.TextFrame); ok {
-			parseDisc(tf.Text, metadata)
+			current, total := parseNumberPair(tf.Text)
+			if current > 0 {
+				metadata.Disc = &NumberInSet{Current: current, Total: total}
+			}
 		}
 	}
 
@@ -133,42 +138,4 @@ func (c *Chapel) Dump(output io.Writer) error {
 	}
 	_, err = output.Write(yamlData)
 	return err
-}
-
-// parseNumberPair parses strings like "1" or "1/10" and returns current and total values
-func parseNumberPair(s string) (current, total int) {
-	parts := strings.Split(s, "/")
-	if len(parts) > 0 && parts[0] != "" {
-		if c, err := strconv.Atoi(parts[0]); err == nil {
-			current = c
-		}
-	}
-	if len(parts) > 1 && parts[1] != "" {
-		if t, err := strconv.Atoi(parts[1]); err == nil {
-			total = t
-		}
-	}
-	return current, total
-}
-
-// parseTrack parses track string like "1" or "1/10"
-func parseTrack(s string, metadata *Metadata) {
-	current, total := parseNumberPair(s)
-	if current > 0 {
-		metadata.Track = current
-	}
-	if total > 0 {
-		metadata.TotalTracks = total
-	}
-}
-
-// parseDisc parses disc string like "1" or "1/2"
-func parseDisc(s string, metadata *Metadata) {
-	current, total := parseNumberPair(s)
-	if current > 0 {
-		metadata.Disc = current
-	}
-	if total > 0 {
-		metadata.TotalDiscs = total
-	}
 }

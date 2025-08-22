@@ -16,8 +16,7 @@ func TestMetadataYAMLMarshal(t *testing.T) {
 		Album:       "Test Album",
 		AlbumArtist: "Test Album Artist",
 		Date:        "2024",
-		Track:       1,
-		TotalTracks: 10,
+		Track:       &NumberInSet{Current: 1, Total: 10},
 		Genre:       "Podcast",
 		Chapters: []*Chapter{
 			{Start: 0, Title: "Introduction"},
@@ -42,6 +41,9 @@ func TestMetadataYAMLMarshal(t *testing.T) {
 	}
 	if !strings.Contains(yamlStr, "date: \"2024\"") {
 		t.Errorf("YAML should contain date")
+	}
+	if !strings.Contains(yamlStr, "track: 1/10") {
+		t.Errorf("YAML should contain track in current/total format")
 	}
 	if !strings.Contains(yamlStr, "- 0:00 Introduction") {
 		t.Errorf("YAML should contain chapters with formatted time")
@@ -177,5 +179,46 @@ func TestChapterWithQuotes(t *testing.T) {
 				t.Errorf("Round-trip failed: expected title %q, got %q", tt.title, unmarshaledChapter.Title)
 			}
 		})
+	}
+}
+
+func TestNumberInSet(t *testing.T) {
+	tests := []struct {
+		input    *NumberInSet
+		expected string
+	}{
+		{&NumberInSet{Current: 1, Total: 0}, "1"},
+		{&NumberInSet{Current: 3, Total: 10}, "3/10"},
+		{&NumberInSet{Current: 1, Total: 2}, "1/2"},
+	}
+
+	for _, tt := range tests {
+		got := tt.input.String()
+		if got != tt.expected {
+			t.Errorf("NumberInSet.String() = %q, want %q", got, tt.expected)
+		}
+
+		// Test YAML marshaling
+		yamlData, err := yaml.Marshal(tt.input)
+		if err != nil {
+			t.Fatalf("Failed to marshal NumberInSet: %v", err)
+		}
+
+		yamlStr := strings.TrimSpace(string(yamlData))
+		if yamlStr != tt.expected {
+			t.Errorf("YAML marshal = %q, want %q", yamlStr, tt.expected)
+		}
+
+		// Test YAML unmarshaling
+		var unmarshaled NumberInSet
+		err = yaml.Unmarshal([]byte(tt.expected), &unmarshaled)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal NumberInSet: %v", err)
+		}
+
+		if unmarshaled.Current != tt.input.Current || unmarshaled.Total != tt.input.Total {
+			t.Errorf("Unmarshal failed: got Current=%d, Total=%d, want Current=%d, Total=%d",
+				unmarshaled.Current, unmarshaled.Total, tt.input.Current, tt.input.Total)
+		}
 	}
 }

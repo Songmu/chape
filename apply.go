@@ -150,21 +150,13 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	}
 
 	// Set track information
-	if metadata.Track != 0 || metadata.TotalTracks != 0 {
-		trackStr := fmt.Sprintf("%d", metadata.Track)
-		if metadata.TotalTracks != 0 {
-			trackStr = fmt.Sprintf("%d/%d", metadata.Track, metadata.TotalTracks)
-		}
-		id3tag.AddTextFrame("TRCK", id3v2.EncodingUTF8, trackStr)
+	if metadata.Track != nil && metadata.Track.Current > 0 {
+		id3tag.AddTextFrame("TRCK", id3v2.EncodingUTF8, metadata.Track.String())
 	}
 
 	// Set disc information
-	if metadata.Disc != 0 || metadata.TotalDiscs != 0 {
-		discStr := fmt.Sprintf("%d", metadata.Disc)
-		if metadata.TotalDiscs != 0 {
-			discStr = fmt.Sprintf("%d/%d", metadata.Disc, metadata.TotalDiscs)
-		}
-		id3tag.AddTextFrame("TPOS", id3v2.EncodingUTF8, discStr)
+	if metadata.Disc != nil && metadata.Disc.Current > 0 {
+		id3tag.AddTextFrame("TPOS", id3v2.EncodingUTF8, metadata.Disc.String())
 	}
 
 	// Set comment

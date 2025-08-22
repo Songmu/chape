@@ -11,23 +11,27 @@ import (
 
 // Metadata represents the metadata of an MP3 file
 type Metadata struct {
-	Title       string     `yaml:"title,omitempty"`
-	Artist      string     `yaml:"artist,omitempty"`
-	Album       string     `yaml:"album,omitempty"`
-	AlbumArtist string     `yaml:"albumArtist,omitempty"`
-	Date        string     `yaml:"date,omitempty"` // TDRC tag for ID3v2.4 (YYYY-MM-DD format)
-	Track       int        `yaml:"track,omitempty"`
-	TotalTracks int        `yaml:"totalTracks,omitempty"`
-	Disc        int        `yaml:"disc,omitempty"`
-	TotalDiscs  int        `yaml:"totalDiscs,omitempty"`
-	Genre       string     `yaml:"genre,omitempty"`
-	Comment     string     `yaml:"comment,omitempty"`
-	Composer    string     `yaml:"composer,omitempty"`
-	Publisher   string     `yaml:"publisher,omitempty"`
-	BPM         int        `yaml:"bpm,omitempty"`
-	Chapters    []*Chapter `yaml:"chapters,omitempty"`
-	Artwork     string     `yaml:"artwork,omitempty"`
-	Lyrics      string     `yaml:"lyrics,omitempty"`
+	Title       string       `yaml:"title"`                 // TIT2 tag (Title/songname/content description)
+	Artist      string       `yaml:"artist"`                // TPE1 tag (Lead performer(s)/Soloist(s))
+	Album       string       `yaml:"album"`                 // TALB tag (Album/Movie/Show title)
+	AlbumArtist string       `yaml:"albumArtist,omitempty"` // TPE2 tag (Band/orchestra/accompaniment)
+	Date        string       `yaml:"date,omitempty"`        // TDRC tag for ID3v2.4 (Recording time)
+	Track       *NumberInSet `yaml:"track,omitempty"`       // TRCK tag (Track number/Position in set)
+	Disc        *NumberInSet `yaml:"disc,omitempty"`        // TPOS tag (Part of a set)
+	Genre       string       `yaml:"genre,omitempty"`       // TCON tag (Content type/Genre)
+	Comment     string       `yaml:"comment,omitempty"`     // COMM tag (Comments)
+	Composer    string       `yaml:"composer,omitempty"`    // TCOM tag (Composer)
+	Publisher   string       `yaml:"publisher,omitempty"`   // TPUB tag (Publisher)
+	BPM         int          `yaml:"bpm,omitempty"`         // TBPM tag (BPM - Beats per minute)
+	Chapters    []*Chapter   `yaml:"chapters,omitempty"`    // CHAP tag (Chapter frames)
+	Artwork     string       `yaml:"artwork,omitempty"`     // APIC tag (Attached picture)
+	Lyrics      string       `yaml:"lyrics,omitempty"`      // USLT tag (Unsynchronised lyric/text transcription)
+}
+
+// NumberInSet represents a current/total number pair in ID3v2 format (e.g., "3/10", "1/2")
+type NumberInSet struct {
+	Current int
+	Total   int
 }
 
 // Chapter represents a single chapter with start time and title
@@ -157,6 +161,43 @@ func (c *Chapter) UnmarshalYAML(b []byte) error {
 		Start: time.Duration(totalMs) * time.Millisecond,
 	}
 	return nil
+}
+
+// String returns number in set in ID3v2 format
+func (n *NumberInSet) String() string {
+	if n.Total > 0 {
+		return fmt.Sprintf("%d/%d", n.Current, n.Total)
+	}
+	return fmt.Sprintf("%d", n.Current)
+}
+
+// MarshalYAML marshals number in set to YAML format
+func (n *NumberInSet) MarshalYAML() ([]byte, error) {
+	return []byte(n.String()), nil
+}
+
+// UnmarshalYAML unmarshals number in set from YAML format
+func (n *NumberInSet) UnmarshalYAML(b []byte) error {
+	str := unquote(strings.TrimSpace(string(b)))
+	current, total := parseNumberPair(str)
+	*n = NumberInSet{Current: current, Total: total}
+	return nil
+}
+
+// parseNumberPair parses strings like "1" or "1/10" and returns current and total values
+func parseNumberPair(s string) (current, total int) {
+	parts := strings.Split(s, "/")
+	if len(parts) > 0 && parts[0] != "" {
+		if c, err := strconv.Atoi(parts[0]); err == nil {
+			current = c
+		}
+	}
+	if len(parts) > 1 && parts[1] != "" {
+		if t, err := strconv.Atoi(parts[1]); err == nil {
+			total = t
+		}
+	}
+	return current, total
 }
 
 // unquote removes quotes from a string, handling both single and double quotes
