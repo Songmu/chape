@@ -177,32 +177,6 @@ Override artwork source:
 chapel --artwork https://example.com/new-cover.jpg audio.mp3
 ```
 
-## Technical Details
-
-### ID3v2 Compatibility
-
-Chapel supports ID3v2.4 tags with fallback to ID3v2.3 for maximum compatibility:
-
-- Uses UTF-8 encoding for international character support
-- Handles both TDRC (ID3v2.4) and TYER (ID3v2.3) for date fields
-- Preserves existing TXXX frames from other applications
-- Implements proper chapter frame structure according to ID3v2 Chapter Extension
-
-### TXXX Frame Management
-
-Chapel uses TXXX (User-defined text) frames for additional metadata:
-
-- `CHAPEL_SOURCE`: Tracks artwork source location
-- Preserves other applications' TXXX frames (e.g., MusicBrainz tags, ReplayGain)
-- Prevents frame duplication
-
-### Error Handling
-
-- Validates YAML syntax before applying changes
-- Shows detailed diff of changes before confirmation
-- Handles missing files gracefully
-- Provides clear error messages for troubleshooting
-
 ## Installation
 
 ```console
