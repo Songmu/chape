@@ -1,5 +1,4 @@
-chapel
-=======
+# Chapel
 
 [![Test Status](https://github.com/Songmu/chapel/actions/workflows/test.yaml/badge.svg?branch=main)][actions]
 [![Coverage Status](https://codecov.io/gh/Songmu/chapel/branch/main/graph/badge.svg)][codecov]
@@ -11,15 +10,198 @@ chapel
 [license]: https://github.com/Songmu/chapel/blob/main/LICENSE
 [PkgGoDev]: https://pkg.go.dev/github.com/Songmu/chapel
 
-chapel short description
+Chapel is a powerful command-line tool for editing MP3 metadata using YAML format. It provides an intuitive way to manage ID3v2 tags, chapters, and artwork in MP3 files.
 
-## Synopsis
+## Features
+- **YAML-based metadata editing**: Edit MP3 metadata using familiar YAML syntax
+- **Chapter support**: Manage chapter markers for audiobooks and podcasts
+- **Artwork management**: Handle embedded artwork with support for local files, URLs, and data URIs
+- **Interactive editing**: Built-in editor support for seamless workflow
 
-```go
-// simple usage here
+## Usage
+
+### Basic Commands
+
+**Interactive editing with your `EDITOR`:**
+```bash
+chapel audio.mp3
 ```
 
-## Description
+**Dump metadata to YAML:**
+```bash
+chapel dump audio.mp3 > metadata.yaml
+```
+
+**Apply YAML metadata to MP3:**
+```bash
+chapel apply audio.mp3 < metadata.yaml
+```
+
+### Options
+- `-y`: Skip confirmation prompts (useful for automation)
+- `--artwork <path>`: Override artwork with local file path or HTTP/HTTPS URL
+
+### Examples
+
+**Edit metadata interactively:**
+```bash
+chapel my-audiobook.mp3
+```
+
+**Edit metadata with custom artwork:**
+```bash
+chapel --artwork cover.jpg my-audiobook.mp3
+```
+
+**Batch processing with automation:**
+```bash
+chapel apply -y audio.mp3 < batch-metadata.yaml
+```
+
+## YAML Format
+
+Chapel uses a structured YAML format for metadata:
+
+```yaml
+title: "My Audiobook"
+artist: "Author Name"
+album: "Book Series"
+albumArtist: "Publisher"
+date: "2024"
+track: "1/12"
+disc: "1/2"
+genre: "Audiobook"
+comment: "A great book"
+composer: "Author Name"
+publisher: "Publisher Name"
+bpm: 120
+artwork: "cover.jpg"
+lyrics: |
+  Chapter content here...
+chapters:
+  - "0:00 Introduction"
+  - "5:30 Chapter 1: Getting Started"
+  - "15:45 Chapter 2: Advanced Topics"
+  - "28:20 Chapter 3: Conclusion"
+```
+
+### Metadata Fields
+
+| Field | Description | ID3v2 Tag |
+|-------|-------------|-----------|
+| `title` | Song/track title | TIT2 |
+| `artist` | Primary artist | TPE1 |
+| `album` | Album title | TALB |
+| `albumArtist` | Album artist | TPE2 |
+| `date` | Recording date (supports various precision levels) | TDRC |
+| `track` | Track number (current/total) | TRCK |
+| `disc` | Disc number (current/total) | TPOS |
+| `genre` | Music genre | TCON |
+| `comment` | Comments | COMM |
+| `composer` | Composer | TCOM |
+| `publisher` | Publisher | TPUB |
+| `bpm` | Beats per minute | TBPM |
+| `artwork` | Artwork (file path, URL, or data URI) | APIC |
+| `lyrics` | Lyrics text | USLT |
+| `chapters` | Chapter markers with timestamps | CHAP |
+
+### Date Format
+
+The `date` field supports ISO 8601 format with varying precision:
+- `2024` (year only)
+- `2024-03` (year-month)
+- `2024-03-15` (year-month-day)
+- `2024-03-15T14:30` (with time)
+- `2024-03-15T14:30:45` (with seconds)
+
+### Chapter Format
+
+Chapters use WebVTT-style time format with titles:
+```yaml
+chapters:
+  - "0:00 Introduction"
+  - "1:05:30 Long chapter (over 1 hour)"
+  - "1:23.500 Chapter with milliseconds"
+```
+
+### Artwork Sources
+
+Chapel supports multiple artwork sources:
+
+1. **Local file paths**: `artwork: "cover.jpg"`
+2. **HTTP/HTTPS URLs**: `artwork: "https://example.com/cover.jpg"`
+3. **Data URIs**: `artwork: "data:image/jpeg;base64,/9j/4AAQ..."`
+
+When you specify an artwork path that doesn't exist, Chapel will:
+1. Check if the MP3 has embedded artwork
+2. Automatically extract and save it to the specified path
+3. Update the metadata to reference the new file
+
+## Advanced Features
+
+### Interactive Editor Integration
+
+Chapel integrates with your preferred text editor for seamless metadata editing:
+
+```bash
+# Uses $EDITOR environment variable
+export EDITOR=nano
+chapel audio.mp3
+
+# Or specify complex editor commands
+export EDITOR="code --wait"
+chapel audio.mp3
+```
+
+### Automation and Scripting
+
+Use the `-y` flag for non-interactive batch processing:
+
+```bash
+#!/bin/bash
+for file in *.mp3; do
+    echo "title: $(basename "$file" .mp3)" | chapel apply -y "$file"
+done
+```
+
+### Artwork Management
+
+Extract artwork from MP3 files:
+```bash
+# This will extract artwork to cover.jpg if it doesn't exist
+echo 'artwork: cover.jpg' | chapel apply audio.mp3
+```
+
+Override artwork source:
+```bash
+chapel --artwork https://example.com/new-cover.jpg audio.mp3
+```
+
+## Technical Details
+
+### ID3v2 Compatibility
+
+Chapel supports ID3v2.4 tags with fallback to ID3v2.3 for maximum compatibility:
+
+- Uses UTF-8 encoding for international character support
+- Handles both TDRC (ID3v2.4) and TYER (ID3v2.3) for date fields
+- Preserves existing TXXX frames from other applications
+- Implements proper chapter frame structure according to ID3v2 Chapter Extension
+
+### TXXX Frame Management
+
+Chapel uses TXXX (User-defined text) frames for additional metadata:
+
+- `CHAPEL_SOURCE`: Tracks artwork source location
+- Preserves other applications' TXXX frames (e.g., MusicBrainz tags, ReplayGain)
+- Prevents frame duplication
+
+### Error Handling
+
+- Validates YAML syntax before applying changes
+- Shows detailed diff of changes before confirmation
+- Handles missing files gracefully
+- Provides clear error messages for troubleshooting
 
 ## Installation
 
