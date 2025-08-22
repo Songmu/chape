@@ -28,6 +28,5 @@ var cmdApply = &command{
 			return chapel.New(argv[0]).Apply(os.Stdin, *yes)
 		}
 		return fmt.Errorf("unknown file type %q", argv[0])
-
 	},
 }

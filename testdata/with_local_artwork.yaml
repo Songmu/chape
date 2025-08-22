@@ -1,0 +1,8 @@
+title: "Test with Local Artwork"
+artist: "Artwork Test Artist"
+album: "Artwork Album"
+artwork: "./testdata/assets/logo.png"
+chapters:
+- "0:00 Start"
+- "5:00 Middle"
+- "9:30 End"

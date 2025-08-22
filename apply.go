@@ -50,35 +50,37 @@ func (c *Chapel) Apply(input io.Reader, yes bool) error {
 		log.Println("No changes to apply.")
 		return nil
 	}
-	// Compare and show diff if different
-	diff := generateDiff(currentYAML, newYAML)
-	log.Printf("The following changes will be applied:\n%s\n", diff)
-	// Check if input is os.Stdin (when called from pipe/redirect)
-	// Type assertion to check if input is *os.File and if it's stdin
-	if file, ok := input.(*os.File); ok && file == os.Stdin {
-		// Input is from stdin (e.g., chapel apply < file.yaml)
-		// Need to reopen terminal for user interaction
+	if !yes {
+		// Compare and show diff if different
+		diff := generateDiff(currentYAML, newYAML)
+		log.Printf("The following changes will be applied:\n%s\n", diff)
+		// Check if input is os.Stdin (when called from pipe/redirect)
+		// Type assertion to check if input is *os.File and if it's stdin
+		if file, ok := input.(*os.File); ok && file == os.Stdin {
+			// Input is from stdin (e.g., chapel apply < file.yaml)
+			// Need to reopen terminal for user interaction
 
-		// Use /dev/tty on Unix-like systems, CON on Windows
-		consoleDevice := "/dev/tty"
-		if runtime.GOOS == "windows" {
-			consoleDevice = "CON"
+			// Use /dev/tty on Unix-like systems, CON on Windows
+			consoleDevice := "/dev/tty"
+			if runtime.GOOS == "windows" {
+				consoleDevice = "CON"
+			}
+
+			tty, err := os.OpenFile(consoleDevice, os.O_RDWR, 0)
+			if err != nil {
+				return fmt.Errorf("failed to open %s: %w", consoleDevice, err)
+			}
+			defer tty.Close()
+
+			// Temporarily replace stdin with tty
+			oldStdin := os.Stdin
+			os.Stdin = tty
+			defer func() { os.Stdin = oldStdin }()
 		}
-
-		tty, err := os.OpenFile(consoleDevice, os.O_RDWR, 0)
-		if err != nil {
-			return fmt.Errorf("failed to open %s: %w", consoleDevice, err)
+		if !prompter.YN("Apply these changes?", true) {
+			log.Println("Changes not applied.")
+			return nil
 		}
-		defer tty.Close()
-
-		// Temporarily replace stdin with tty
-		oldStdin := os.Stdin
-		os.Stdin = tty
-		defer func() { os.Stdin = oldStdin }()
-	}
-	if !yes && !prompter.YN("Apply these changes?", true) {
-		log.Println("Changes not applied.")
-		return nil
 	}
 	// Apply changes to MP3 file
 	err = c.writeMetadata(&newMetadata)
@@ -206,23 +208,30 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 			// Skip data URIs as they don't need source tracking
 			if !strings.HasPrefix(metadata.Artwork, "data:") {
 				txxxFrames := id3tag.GetFrames("TXXX")
-				var preservedFrames []id3v2.TextFrame
+				var preservedFrames []id3v2.UserDefinedTextFrame
 				// Collect all non-CHAPEL_SOURCE TXXX frames
 				for _, frame := range txxxFrames {
-					if tf, ok := frame.(id3v2.TextFrame); ok {
-						if !strings.HasPrefix(tf.Text, "CHAPEL_SOURCE\x00") {
-							preservedFrames = append(preservedFrames, tf)
+					if udtf, ok := frame.(id3v2.UserDefinedTextFrame); ok {
+						if udtf.Description != "CHAPEL_SOURCE" {
+							preservedFrames = append(preservedFrames, udtf)
 						}
 					}
 				}
 				// Clear all TXXX frames and re-add preserved ones
 				id3tag.DeleteFrames("TXXX")
 				for _, frame := range preservedFrames {
-					id3tag.AddTextFrame("TXXX", frame.Encoding, frame.Text)
+					id3tag.AddUserDefinedTextFrame(id3v2.UserDefinedTextFrame{
+						Encoding:    frame.Encoding,
+						Description: frame.Description,
+						Value:       frame.Value,
+					})
 				}
 				// Add new CHAPEL_SOURCE frame
-				chapelSourceValue := "CHAPEL_SOURCE\x00" + metadata.Artwork
-				id3tag.AddTextFrame("TXXX", id3v2.EncodingUTF8, chapelSourceValue)
+				id3tag.AddUserDefinedTextFrame(id3v2.UserDefinedTextFrame{
+					Encoding:    id3v2.EncodingUTF8,
+					Description: "CHAPEL_SOURCE",
+					Value:       metadata.Artwork,
+				})
 			}
 		}
 	}

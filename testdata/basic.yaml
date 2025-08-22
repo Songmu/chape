@@ -1,0 +1,16 @@
+title: "Basic Test Episode"
+artist: "Test Host"
+album: "Test Podcast"
+albumArtist: "Test Network"
+date: "2024"
+track: "1/10"
+disc: "1/2"
+genre: "Podcast"
+comment: "A basic test episode for integration testing"
+composer: "Test Producer"
+publisher: "Test Network Inc"
+bpm: 120
+chapters:
+- "0:00 Introduction"
+- "2:30 Main Topic"
+- "8:15 Conclusion"

@@ -147,15 +147,15 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 					chapelSource := ""
 					txxxFrames := id3tag.GetFrames("TXXX")
 					for _, frame := range txxxFrames {
-						if tf, ok := frame.(id3v2.TextFrame); ok {
-							s, found := strings.CutPrefix(tf.Text, "CHAPEL_SOURCE\x00")
-							if found {
-								chapelSource = s
+						if udtf, ok := frame.(id3v2.UserDefinedTextFrame); ok {
+							// UserDefinedTextFrame has Description and Value fields
+							if udtf.Description == "CHAPEL_SOURCE" {
+								chapelSource = udtf.Value
 								break
 							}
 						}
 					}
-					// Store chapel source and raw picture data for later processing
+					// Always prefer CHAPEL_SOURCE if available, regardless of file existence
 					if chapelSource != "" {
 						metadata.Artwork = chapelSource
 					} else {

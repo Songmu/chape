@@ -1,0 +1,12 @@
+title: ""
+artist: ""
+album: ""
+date: "2024"
+track: "999/999"
+disc: "99/99"
+genre: ""
+comment: ""
+chapters:
+- "0:00.000 Start with milliseconds"
+- "0:00.001 Almost immediate"
+- "9:59.999 Last possible in 10 minutes"
