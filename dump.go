@@ -25,6 +25,12 @@ func (c *Chapel) Dump(output io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal to YAML: %w", err)
 	}
+
+	// Add YAML Language Server schema comment
+	schemaComment := "# yaml-language-server: $schema=https://raw.githubusercontent.com/Songmu/chapel/refs/heads/main/schema.yaml\n"
+	if _, err = output.Write([]byte(schemaComment)); err != nil {
+		return err
+	}
 	_, err = output.Write(yamlData)
 	return err
 }
