@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/bogem/id3v2/v2"
@@ -51,25 +50,9 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 	defer id3tag.Close()
 
 	var metadata = &Metadata{}
-	// Read basic metadata from ID3v2
-	metadata.Title = id3tag.Title()
-	metadata.Artist = id3tag.Artist()
-	metadata.Album = id3tag.Album()
-	metadata.Genre = id3tag.Genre()
 
-	// Read TIT3 (Subtitle/Description refinement)
-	if subtitleFramer := id3tag.GetLastFrame("TIT3"); subtitleFramer != nil {
-		if tf, ok := subtitleFramer.(id3v2.TextFrame); ok {
-			metadata.Subtitle = tf.Text
-		}
-	}
-
-	// Read TIT1 (Content group description)
-	if groupingFramer := id3tag.GetLastFrame("TIT1"); groupingFramer != nil {
-		if tf, ok := groupingFramer.(id3v2.TextFrame); ok {
-			metadata.Grouping = tf.Text
-		}
-	}
+	// Read all text frames using the centralized mapping
+	readTextFrames(id3tag, metadata)
 
 	// Try to get date from TDRC (ID3v2.4) or fall back to Year
 	if dateFramer := id3tag.GetLastFrame("TDRC"); dateFramer != nil {
@@ -85,63 +68,6 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 		var ts Timestamp
 		if err := ts.UnmarshalYAML([]byte(id3tag.Year())); err == nil {
 			metadata.Date = &ts
-		}
-	}
-
-	// Get additional metadata from specific frames
-	if albumArtistFramer := id3tag.GetLastFrame("TPE2"); albumArtistFramer != nil {
-		if tf, ok := albumArtistFramer.(id3v2.TextFrame); ok {
-			metadata.AlbumArtist = tf.Text
-		}
-	}
-
-	if composerFramer := id3tag.GetLastFrame("TCOM"); composerFramer != nil {
-		if tf, ok := composerFramer.(id3v2.TextFrame); ok {
-			metadata.Composer = tf.Text
-		}
-	}
-
-	if publisherFramer := id3tag.GetLastFrame("TPUB"); publisherFramer != nil {
-		if tf, ok := publisherFramer.(id3v2.TextFrame); ok {
-			metadata.Publisher = tf.Text
-		}
-	}
-
-	if copyrightFramer := id3tag.GetLastFrame("TCOP"); copyrightFramer != nil {
-		if tf, ok := copyrightFramer.(id3v2.TextFrame); ok {
-			metadata.Copyright = tf.Text
-		}
-	}
-
-	if languageFramer := id3tag.GetLastFrame("TLAN"); languageFramer != nil {
-		if tf, ok := languageFramer.(id3v2.TextFrame); ok {
-			metadata.Language = tf.Text
-		}
-	}
-
-	if bpmFramer := id3tag.GetLastFrame("TBPM"); bpmFramer != nil {
-		if tf, ok := bpmFramer.(id3v2.TextFrame); ok {
-			if bpm, err := strconv.Atoi(tf.Text); err == nil {
-				metadata.BPM = bpm
-			}
-		}
-	}
-
-	if trackFramer := id3tag.GetLastFrame("TRCK"); trackFramer != nil {
-		if tf, ok := trackFramer.(id3v2.TextFrame); ok {
-			current, total := parseNumberPair(tf.Text)
-			if current > 0 {
-				metadata.Track = &NumberInSet{Current: current, Total: total}
-			}
-		}
-	}
-
-	if discFramer := id3tag.GetLastFrame("TPOS"); discFramer != nil {
-		if tf, ok := discFramer.(id3v2.TextFrame); ok {
-			current, total := parseNumberPair(tf.Text)
-			if current > 0 {
-				metadata.Disc = &NumberInSet{Current: current, Total: total}
-			}
 		}
 	}
 
