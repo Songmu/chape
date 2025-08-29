@@ -48,9 +48,6 @@ var textFrameMappings = []tagMapping{
 		tagID:     "TRCK",
 		fieldName: "Track",
 		toString: func(m *Metadata) string {
-			if m.Track == nil || m.Track.Current == 0 {
-				return ""
-			}
 			return m.Track.String()
 		},
 		fromString: func(m *Metadata, v string) {
@@ -64,9 +61,6 @@ var textFrameMappings = []tagMapping{
 		tagID:     "TPOS",
 		fieldName: "Disc",
 		toString: func(m *Metadata) string {
-			if m.Disc == nil || m.Disc.Current == 0 {
-				return ""
-			}
 			return m.Disc.String()
 		},
 		fromString: func(m *Metadata, v string) {

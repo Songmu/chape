@@ -189,6 +189,9 @@ func (c *Chapter) UnmarshalYAML(b []byte) error {
 
 // String returns number in set in ID3v2 format
 func (n *NumberInSet) String() string {
+	if n == nil || n.Current == 0 {
+		return ""
+	}
 	if n.Total > 0 {
 		return fmt.Sprintf("%d/%d", n.Current, n.Total)
 	}
