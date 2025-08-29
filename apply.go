@@ -116,6 +116,8 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 
 	// Clear existing frames to avoid duplicates
 	id3tag.DeleteAllFrames()
+	id3tag.SetVersion(4)
+	id3tag.SetDefaultEncoding(id3v2.EncodingUTF8)
 
 	// Set basic metadata with UTF-8 encoding for multibyte support
 	if metadata.Title != "" {
