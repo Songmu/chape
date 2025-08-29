@@ -6,6 +6,9 @@ properties:
   title:
     type: string
     description: Track or episode title. For podcasts, this is the episode title.
+  subtitle:
+    type: string
+    description: Subtitle or description refinement. Commonly used in podcasts for episode descriptions or additional title information.
   artist:
     type: string
     description: Artist or performer name. For podcasts, this is typically the host or creator name.
@@ -15,6 +18,9 @@ properties:
   albumArtist:
     type: string
     description: Album artist or main performer. For podcasts, this is the main podcast creator or network.
+  grouping:
+    type: string
+    description: Content group description. Used to group related tracks together, such as movements of a work or episodes in a series/season.
   date:
     type: string
     pattern: '^\d{4}(-\d{2}(-\d{2}(T\d{2}(:\d{2}(:\d{2})?)?)?)?)?$'
@@ -39,6 +45,12 @@ properties:
   publisher:
     type: string
     description: Record label or publisher. For podcasts, this is the podcast network or publishing platform.
+  copyright:
+    type: string
+    description: Copyright message. Contains copyright information for the audio content.
+  language:
+    type: string
+    description: Language code(s) for the audio content. ISO 639-2 language code (e.g., "eng" for English, "jpn" for Japanese).
   bpm:
     type: integer
     minimum: 1

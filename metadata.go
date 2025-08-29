@@ -12,9 +12,11 @@ import (
 // Metadata represents the metadata of an MP3 file
 type Metadata struct {
 	Title       string       `yaml:"title"`                 // TIT2 tag (Title/songname/content description)
+	Subtitle    string       `yaml:"subtitle,omitempty"`    // TIT3 tag (Subtitle/Description refinement)
 	Artist      string       `yaml:"artist"`                // TPE1 tag (Lead performer(s)/Soloist(s))
 	Album       string       `yaml:"album"`                 // TALB tag (Album/Movie/Show title)
 	AlbumArtist string       `yaml:"albumArtist,omitempty"` // TPE2 tag (Band/orchestra/accompaniment)
+	Grouping    string       `yaml:"grouping,omitempty"`    // TIT1 tag (Content group description)
 	Date        *Timestamp   `yaml:"date,omitempty"`        // TDRC tag for ID3v2.4 (Recording time)
 	Track       *NumberInSet `yaml:"track,omitempty"`       // TRCK tag (Track number/Position in set)
 	Disc        *NumberInSet `yaml:"disc,omitempty"`        // TPOS tag (Part of a set)
@@ -22,6 +24,8 @@ type Metadata struct {
 	Comment     string       `yaml:"comment,omitempty"`     // COMM tag (Comments)
 	Composer    string       `yaml:"composer,omitempty"`    // TCOM tag (Composer)
 	Publisher   string       `yaml:"publisher,omitempty"`   // TPUB tag (Publisher)
+	Copyright   string       `yaml:"copyright,omitempty"`   // TCOP tag (Copyright message)
+	Language    string       `yaml:"language,omitempty"`    // TLAN tag (Language(s))
 	BPM         int          `yaml:"bpm,omitempty"`         // TBPM tag (BPM - Beats per minute)
 	Chapters    []*Chapter   `yaml:"chapters,omitempty"`    // CHAP tag (Chapter frames)
 	Artwork     string       `yaml:"artwork,omitempty"`     // APIC tag (Attached picture)

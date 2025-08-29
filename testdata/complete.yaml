@@ -1,7 +1,9 @@
 title: "Complete Metadata Test"
+subtitle: "A comprehensive testing suite"
 artist: "John Doe"
 album: "Test Album"
 albumArtist: "Various Artists"
+grouping: "Test Series Collection"
 date: "2024-03-15"
 track: "5/12"
 disc: "2/3"
@@ -9,6 +11,8 @@ genre: "Educational"
 comment: "This is a comprehensive test with all metadata fields populated"
 composer: "Jane Smith"
 publisher: "Educational Press"
+copyright: "© 2024 Educational Press. All rights reserved."
+language: "eng"
 bpm: 128
 lyrics: |
   [00:00] Welcome to our educational program

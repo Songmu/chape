@@ -66,9 +66,11 @@ Chapel uses a structured YAML format for metadata:
 
 ```yaml
 title: "My Audiobook"
+subtitle: "Unabridged Edition"
 artist: "Author Name"
 album: "Book Series"
 albumArtist: "Publisher"
+grouping: "Volume 1: The Beginning"
 date: "2024"
 track: "1/12"
 disc: "1/2"
@@ -76,6 +78,8 @@ genre: "Audiobook"
 comment: "A great book"
 composer: "Author Name"
 publisher: "Publisher Name"
+copyright: "© 2024 Publisher Name"
+language: "eng"
 bpm: 120
 artwork: "cover.jpg"
 lyrics: |
@@ -92,9 +96,11 @@ chapters:
 | Field | Description | ID3v2 Tag |
 |-------|-------------|-----------|
 | `title` | Song/track title (podcast: episode title) | TIT2 |
+| `subtitle` | Subtitle/description refinement | TIT3 |
 | `artist` | Primary artist (podcast: host name) | TPE1 |
 | `album` | Album title (podcast: show name) | TALB |
 | `albumArtist` | Album artist (podcast: network/publisher) | TPE2 |
+| `grouping` | Content group (e.g., work/movement, season) | TIT1 |
 | `date` | Recording date | TDRC |
 | `track` | Track number (podcast: episode number) | TRCK |
 | `disc` | Disc number (podcast: season number) | TPOS |
@@ -102,6 +108,8 @@ chapters:
 | `comment` | Comments (podcast: episode description) | COMM |
 | `composer` | Composer (podcast: producer) | TCOM |
 | `publisher` | Publisher (podcast: network/platform) | TPUB |
+| `copyright` | Copyright message | TCOP |
+| `language` | Language code (e.g., "eng", "jpn") | TLAN |
 | `bpm` | Beats per minute | TBPM |
 | `artwork` | Artwork (file path, URL, or data URI) | APIC |
 | `lyrics` | Lyrics text (podcast: transcript) | USLT |
