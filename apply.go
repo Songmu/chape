@@ -114,32 +114,45 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	}
 	defer id3tag.Close()
 
-	// Clear existing frames to avoid duplicates
-	id3tag.DeleteAllFrames()
+	// Set version and encoding
 	id3tag.SetVersion(4)
 	id3tag.SetDefaultEncoding(id3v2.EncodingUTF8)
 
 	// Set basic metadata with UTF-8 encoding for multibyte support
+	// Delete and re-add frames to avoid duplicates
+	id3tag.DeleteFrames("TIT2")
 	if metadata.Title != "" {
 		id3tag.AddTextFrame("TIT2", id3v2.EncodingUTF8, metadata.Title)
 	}
+
+	id3tag.DeleteFrames("TIT3")
 	if metadata.Subtitle != "" {
 		id3tag.AddTextFrame("TIT3", id3v2.EncodingUTF8, metadata.Subtitle)
 	}
+
+	id3tag.DeleteFrames("TPE1")
 	if metadata.Artist != "" {
 		id3tag.AddTextFrame("TPE1", id3v2.EncodingUTF8, metadata.Artist)
 	}
+
+	id3tag.DeleteFrames("TALB")
 	if metadata.Album != "" {
 		id3tag.AddTextFrame("TALB", id3v2.EncodingUTF8, metadata.Album)
 	}
+
+	id3tag.DeleteFrames("TIT1")
 	if metadata.Grouping != "" {
 		id3tag.AddTextFrame("TIT1", id3v2.EncodingUTF8, metadata.Grouping)
 	}
+
+	id3tag.DeleteFrames("TCON")
 	if metadata.Genre != "" {
 		id3tag.AddTextFrame("TCON", id3v2.EncodingUTF8, metadata.Genre)
 	}
 
 	// Set date using TDRC tag (ID3v2.4) and Year for compatibility
+	id3tag.DeleteFrames("TDRC")
+	id3tag.DeleteFrames("TYER") // Also delete legacy year frame
 	if metadata.Date != nil && !metadata.Date.Time.IsZero() {
 		// Set Year for ID3v2.3 compatibility. It should be performed before add TDRC
 		yearStr := metadata.Date.Time.Format("2006")
@@ -150,36 +163,50 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	}
 
 	// Set additional text frames
+	id3tag.DeleteFrames("TPE2")
 	if metadata.AlbumArtist != "" {
 		id3tag.AddTextFrame("TPE2", id3v2.EncodingUTF8, metadata.AlbumArtist)
 	}
+
+	id3tag.DeleteFrames("TCOM")
 	if metadata.Composer != "" {
 		id3tag.AddTextFrame("TCOM", id3v2.EncodingUTF8, metadata.Composer)
 	}
+
+	id3tag.DeleteFrames("TPUB")
 	if metadata.Publisher != "" {
 		id3tag.AddTextFrame("TPUB", id3v2.EncodingUTF8, metadata.Publisher)
 	}
+
+	id3tag.DeleteFrames("TCOP")
 	if metadata.Copyright != "" {
 		id3tag.AddTextFrame("TCOP", id3v2.EncodingUTF8, metadata.Copyright)
 	}
+
+	id3tag.DeleteFrames("TLAN")
 	if metadata.Language != "" {
 		id3tag.AddTextFrame("TLAN", id3v2.EncodingUTF8, metadata.Language)
 	}
+
+	id3tag.DeleteFrames("TBPM")
 	if metadata.BPM != 0 {
 		id3tag.AddTextFrame("TBPM", id3v2.EncodingUTF8, fmt.Sprintf("%d", metadata.BPM))
 	}
 
 	// Set track information
+	id3tag.DeleteFrames("TRCK")
 	if metadata.Track != nil && metadata.Track.Current > 0 {
 		id3tag.AddTextFrame("TRCK", id3v2.EncodingUTF8, metadata.Track.String())
 	}
 
 	// Set disc information
+	id3tag.DeleteFrames("TPOS")
 	if metadata.Disc != nil && metadata.Disc.Current > 0 {
 		id3tag.AddTextFrame("TPOS", id3v2.EncodingUTF8, metadata.Disc.String())
 	}
 
 	// Set comment
+	id3tag.DeleteFrames(id3tag.CommonID("Comments"))
 	if metadata.Comment != "" {
 		id3tag.AddCommentFrame(id3v2.CommentFrame{
 			Encoding:    id3v2.EncodingUTF8,
