@@ -130,20 +130,7 @@ func applyTextFrames(id3tag *id3v2.Tag, metadata *Metadata) {
 
 // readTextFrames reads text frames from ID3 tag
 func readTextFrames(id3tag *id3v2.Tag, metadata *Metadata) {
-	// Use reflection to set basic fields directly from tag methods
-	metadata.Title = id3tag.Title()
-	metadata.Artist = id3tag.Artist()
-	metadata.Album = id3tag.Album()
-	metadata.Genre = id3tag.Genre()
-
-	// Read other text frames using mappings
 	for _, mapping := range textFrameMappings {
-		// Skip basic fields already read above
-		if mapping.tagID == "TIT2" || mapping.tagID == "TPE1" ||
-			mapping.tagID == "TALB" || mapping.tagID == "TCON" {
-			continue
-		}
-
 		if framer := id3tag.GetLastFrame(mapping.tagID); framer != nil {
 			if tf, ok := framer.(id3v2.TextFrame); ok && tf.Text != "" {
 				mapping.setValue(metadata, tf.Text)
