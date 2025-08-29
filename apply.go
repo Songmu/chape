@@ -138,7 +138,7 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	if metadata.Comment != "" {
 		id3tag.AddCommentFrame(id3v2.CommentFrame{
 			Encoding:    id3v2.EncodingUTF8,
-			Language:    "eng",
+			Language:    metadata.getLanguageForFrames(),
 			Description: "",
 			Text:        metadata.Comment,
 		})
@@ -150,7 +150,7 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	if metadata.Lyrics != "" {
 		id3tag.AddUnsynchronisedLyricsFrame(id3v2.UnsynchronisedLyricsFrame{
 			Encoding: id3v2.EncodingUTF8,
-			Language: "eng",
+			Language: metadata.getLanguageForFrames(),
 			Lyrics:   metadata.Lyrics,
 		})
 	}

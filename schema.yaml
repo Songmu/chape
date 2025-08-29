@@ -50,7 +50,7 @@ properties:
     description: Copyright message. Contains copyright information for the audio content.
   language:
     type: string
-    description: Language code(s) for the audio content. ISO 639-2 language code (e.g., "eng" for English, "jpn" for Japanese).
+    description: Language code for the audio content. Accepts ISO 639-1 (2-character, e.g., "en", "ja") or ISO 639-2 (3-character, e.g., "eng", "jpn"). Input is automatically normalized to ISO 639-2 format. Used for comment and lyrics language fields, with "jpn" as default if not specified.
   bpm:
     type: integer
     minimum: 1

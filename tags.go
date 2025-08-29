@@ -28,7 +28,13 @@ var textFrameMappings = []tagMapping{
 	{tagID: "TCOM", fieldName: "Composer"},
 	{tagID: "TPUB", fieldName: "Publisher"},
 	{tagID: "TCOP", fieldName: "Copyright"},
-	{tagID: "TLAN", fieldName: "Language"},
+	{
+		tagID:     "TLAN",
+		fieldName: "Language",
+		toString: func(m *Metadata) string {
+			return normalizeLanguageCode(m.Language)
+		},
+	},
 	{
 		tagID:     "TBPM",
 		fieldName: "BPM",

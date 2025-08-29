@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/goccy/go-yaml/token"
+	"golang.org/x/text/language"
 )
 
 // Metadata represents the metadata of an MP3 file
@@ -285,6 +286,42 @@ func parseNumberPair(s string) (current, total int) {
 		}
 	}
 	return current, total
+}
+
+// normalizeLanguageCode converts ISO 639-1 (2-character) to ISO 639-2 (3-character) if needed
+func normalizeLanguageCode(code string) string {
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return ""
+	}
+
+	tag, err := language.Parse(code)
+	if err != nil {
+		// If parsing fails, return as-is
+		return code
+	}
+
+	// Get ISO3 (ISO 639-2) representation
+	base, _ := tag.Base()
+	iso3 := base.ISO3()
+	if iso3 != "" {
+		return iso3
+	}
+
+	// Fallback to the original code if ISO3 is not available
+	return code
+}
+
+// getLanguageForFrames returns the language code to use for COMM/USLT frames
+// Uses metadata.Language if available, otherwise defaults to "jpn"
+func (m *Metadata) getLanguageForFrames() string {
+	if m.Language != "" {
+		normalized := normalizeLanguageCode(m.Language)
+		if len(normalized) == 3 {
+			return normalized
+		}
+	}
+	return "jpn" // Default to Japanese
 }
 
 // unquote removes quotes from a string, handling both single and double quotes
