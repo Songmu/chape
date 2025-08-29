@@ -57,6 +57,20 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 	metadata.Album = id3tag.Album()
 	metadata.Genre = id3tag.Genre()
 
+	// Read TIT3 (Subtitle/Description refinement)
+	if subtitleFramer := id3tag.GetLastFrame("TIT3"); subtitleFramer != nil {
+		if tf, ok := subtitleFramer.(id3v2.TextFrame); ok {
+			metadata.Subtitle = tf.Text
+		}
+	}
+
+	// Read TIT1 (Content group description)
+	if groupingFramer := id3tag.GetLastFrame("TIT1"); groupingFramer != nil {
+		if tf, ok := groupingFramer.(id3v2.TextFrame); ok {
+			metadata.Grouping = tf.Text
+		}
+	}
+
 	// Try to get date from TDRC (ID3v2.4) or fall back to Year
 	if dateFramer := id3tag.GetLastFrame("TDRC"); dateFramer != nil {
 		if tf, ok := dateFramer.(id3v2.TextFrame); ok && tf.Text != "" {

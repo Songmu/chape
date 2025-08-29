@@ -123,11 +123,17 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	if metadata.Title != "" {
 		id3tag.AddTextFrame("TIT2", id3v2.EncodingUTF8, metadata.Title)
 	}
+	if metadata.Subtitle != "" {
+		id3tag.AddTextFrame("TIT3", id3v2.EncodingUTF8, metadata.Subtitle)
+	}
 	if metadata.Artist != "" {
 		id3tag.AddTextFrame("TPE1", id3v2.EncodingUTF8, metadata.Artist)
 	}
 	if metadata.Album != "" {
 		id3tag.AddTextFrame("TALB", id3v2.EncodingUTF8, metadata.Album)
+	}
+	if metadata.Grouping != "" {
+		id3tag.AddTextFrame("TIT1", id3v2.EncodingUTF8, metadata.Grouping)
 	}
 	if metadata.Genre != "" {
 		id3tag.AddTextFrame("TCON", id3v2.EncodingUTF8, metadata.Genre)
