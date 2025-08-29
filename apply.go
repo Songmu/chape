@@ -159,6 +159,12 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 	if metadata.Publisher != "" {
 		id3tag.AddTextFrame("TPUB", id3v2.EncodingUTF8, metadata.Publisher)
 	}
+	if metadata.Copyright != "" {
+		id3tag.AddTextFrame("TCOP", id3v2.EncodingUTF8, metadata.Copyright)
+	}
+	if metadata.Language != "" {
+		id3tag.AddTextFrame("TLAN", id3v2.EncodingUTF8, metadata.Language)
+	}
 	if metadata.BPM != 0 {
 		id3tag.AddTextFrame("TBPM", id3v2.EncodingUTF8, fmt.Sprintf("%d", metadata.BPM))
 	}

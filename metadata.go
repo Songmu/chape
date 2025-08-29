@@ -24,6 +24,8 @@ type Metadata struct {
 	Comment     string       `yaml:"comment,omitempty"`     // COMM tag (Comments)
 	Composer    string       `yaml:"composer,omitempty"`    // TCOM tag (Composer)
 	Publisher   string       `yaml:"publisher,omitempty"`   // TPUB tag (Publisher)
+	Copyright   string       `yaml:"copyright,omitempty"`   // TCOP tag (Copyright message)
+	Language    string       `yaml:"language,omitempty"`    // TLAN tag (Language(s))
 	BPM         int          `yaml:"bpm,omitempty"`         // TBPM tag (BPM - Beats per minute)
 	Chapters    []*Chapter   `yaml:"chapters,omitempty"`    // CHAP tag (Chapter frames)
 	Artwork     string       `yaml:"artwork,omitempty"`     // APIC tag (Attached picture)

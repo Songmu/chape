@@ -107,6 +107,18 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 		}
 	}
 
+	if copyrightFramer := id3tag.GetLastFrame("TCOP"); copyrightFramer != nil {
+		if tf, ok := copyrightFramer.(id3v2.TextFrame); ok {
+			metadata.Copyright = tf.Text
+		}
+	}
+
+	if languageFramer := id3tag.GetLastFrame("TLAN"); languageFramer != nil {
+		if tf, ok := languageFramer.(id3v2.TextFrame); ok {
+			metadata.Language = tf.Text
+		}
+	}
+
 	if bpmFramer := id3tag.GetLastFrame("TBPM"); bpmFramer != nil {
 		if tf, ok := bpmFramer.(id3v2.TextFrame); ok {
 			if bpm, err := strconv.Atoi(tf.Text); err == nil {
