@@ -1,6 +1,6 @@
 title: "Test with URL Artwork"
 artist: "URL Artwork Artist"
 album: "Remote Artwork Album"
-artwork: "https://raw.githubusercontent.com/Songmu/chapel/refs/heads/main/testdata/assets/logo.png"
+artwork: "https://raw.githubusercontent.com/Songmu/chape/refs/heads/main/testdata/assets/logo.png"
 genre: "Test"
 comment: "Testing artwork from URL"

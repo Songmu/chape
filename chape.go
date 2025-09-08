@@ -1,4 +1,4 @@
-package chapel
+package chape
 
 import (
 	"fmt"
@@ -10,13 +10,13 @@ import (
 	"unicode"
 )
 
-type Chapel struct {
+type Chape struct {
 	audio   string
 	artwork string
 }
 
-func New(audio string, artwork ...string) *Chapel {
-	c := &Chapel{
+func New(audio string, artwork ...string) *Chape {
+	c := &Chape{
 		audio: audio,
 	}
 	if len(artwork) > 0 {
@@ -25,9 +25,9 @@ func New(audio string, artwork ...string) *Chapel {
 	return c
 }
 
-func (c *Chapel) Edit(yes bool) error {
+func (c *Chape) Edit(yes bool) error {
 	// Create a temporary YAML file with current metadata
-	tempFile, err := os.CreateTemp("", "chapel-*.yaml")
+	tempFile, err := os.CreateTemp("", "chape-*.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
@@ -98,7 +98,7 @@ func (c *Chapel) Edit(yes bool) error {
 // getEditor returns the editor command to use
 func getEditor() string {
 	// Check environment variables in order of preference
-	if editor := os.Getenv("CHAPEL_EDITOR"); editor != "" {
+	if editor := os.Getenv("CHAPE_EDITOR"); editor != "" {
 		return editor
 	}
 	if editor := os.Getenv("EDITOR"); editor != "" {

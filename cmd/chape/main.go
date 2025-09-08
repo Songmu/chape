@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Songmu/chapel/cmd"
+	"github.com/Songmu/chape/cmd"
 )
 
 func main() {
