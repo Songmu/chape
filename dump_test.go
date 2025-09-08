@@ -1,4 +1,4 @@
-package chapel
+package chape
 
 import (
 	"bytes"
@@ -161,7 +161,7 @@ func TestDumpWithArtwork(t *testing.T) {
 }
 
 func TestTXXXFrameNoDuplicates(t *testing.T) {
-	// Test that CHAPEL_SOURCE TXXX frames don't duplicate when applied multiple times
+	// Test that CHAPE_SOURCE TXXX frames don't duplicate when applied multiple times
 	// and that other TXXX frames are preserved
 
 	tests := []struct {
@@ -171,7 +171,7 @@ func TestTXXXFrameNoDuplicates(t *testing.T) {
 		expectedCount  int
 	}{
 		{
-			name: "No existing CHAPEL_SOURCE",
+			name: "No existing CHAPE_SOURCE",
 			existingFrames: []string{
 				"MUSICBRAINZ_ARTISTID\x00a74b1b7f-71a5-4011-9441-d0b5e4122711",
 				"REPLAYGAIN_TRACK_GAIN\x00-2.14 dB",
@@ -180,9 +180,9 @@ func TestTXXXFrameNoDuplicates(t *testing.T) {
 			expectedCount: 1,
 		},
 		{
-			name: "Existing CHAPEL_SOURCE (should replace)",
+			name: "Existing CHAPE_SOURCE (should replace)",
 			existingFrames: []string{
-				"CHAPEL_SOURCE\x00https://old-source.jpg",
+				"CHAPE_SOURCE\x00https://old-source.jpg",
 				"MUSICBRAINZ_ARTISTID\x00a74b1b7f-71a5-4011-9441-d0b5e4122711",
 				"REPLAYGAIN_TRACK_GAIN\x00-2.14 dB",
 			},
@@ -190,11 +190,11 @@ func TestTXXXFrameNoDuplicates(t *testing.T) {
 			expectedCount: 1,
 		},
 		{
-			name: "Multiple CHAPEL_SOURCE (should deduplicate)",
+			name: "Multiple CHAPE_SOURCE (should deduplicate)",
 			existingFrames: []string{
-				"CHAPEL_SOURCE\x00https://old-source.jpg",
+				"CHAPE_SOURCE\x00https://old-source.jpg",
 				"MUSICBRAINZ_ARTISTID\x00a74b1b7f-71a5-4011-9441-d0b5e4122711",
-				"CHAPEL_SOURCE\x00https://duplicate.jpg",
+				"CHAPE_SOURCE\x00https://duplicate.jpg",
 				"REPLAYGAIN_TRACK_GAIN\x00-2.14 dB",
 			},
 			newSource:     "https://new-source.jpg",
@@ -205,19 +205,19 @@ func TestTXXXFrameNoDuplicates(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Simulate the logic from apply.go
-			hasChapelSource := false
+			hasChapeSource := false
 			for _, frameText := range tt.existingFrames {
-				if strings.HasPrefix(frameText, "CHAPEL_SOURCE\x00") {
-					hasChapelSource = true
+				if strings.HasPrefix(frameText, "CHAPE_SOURCE\x00") {
+					hasChapeSource = true
 					break
 				}
 			}
 
 			var finalFrames []string
-			if hasChapelSource {
-				// Preserve non-CHAPEL_SOURCE frames
+			if hasChapeSource {
+				// Preserve non-CHAPE_SOURCE frames
 				for _, frameText := range tt.existingFrames {
-					if !strings.HasPrefix(frameText, "CHAPEL_SOURCE\x00") {
+					if !strings.HasPrefix(frameText, "CHAPE_SOURCE\x00") {
 						finalFrames = append(finalFrames, frameText)
 					}
 				}
@@ -226,20 +226,20 @@ func TestTXXXFrameNoDuplicates(t *testing.T) {
 				finalFrames = append(finalFrames, tt.existingFrames...)
 			}
 
-			// Add new CHAPEL_SOURCE frame
-			newFrame := "CHAPEL_SOURCE\x00" + tt.newSource
+			// Add new CHAPE_SOURCE frame
+			newFrame := "CHAPE_SOURCE\x00" + tt.newSource
 			finalFrames = append(finalFrames, newFrame)
 
 			// Verify results
-			chapelSourceCount := 0
-			var foundChapelSource string
+			chapeSourceCount := 0
+			var foundChapeSource string
 			musicBrainzCount := 0
 			replayGainCount := 0
 
 			for _, frameText := range finalFrames {
-				if strings.HasPrefix(frameText, "CHAPEL_SOURCE\x00") {
-					chapelSourceCount++
-					foundChapelSource = strings.TrimPrefix(frameText, "CHAPEL_SOURCE\x00")
+				if strings.HasPrefix(frameText, "CHAPE_SOURCE\x00") {
+					chapeSourceCount++
+					foundChapeSource = strings.TrimPrefix(frameText, "CHAPE_SOURCE\x00")
 				} else if strings.HasPrefix(frameText, "MUSICBRAINZ_ARTISTID\x00") {
 					musicBrainzCount++
 				} else if strings.HasPrefix(frameText, "REPLAYGAIN_TRACK_GAIN\x00") {
@@ -247,14 +247,14 @@ func TestTXXXFrameNoDuplicates(t *testing.T) {
 				}
 			}
 
-			// Should have exactly one CHAPEL_SOURCE frame
-			if chapelSourceCount != tt.expectedCount {
-				t.Errorf("Expected exactly %d CHAPEL_SOURCE frame, got %d", tt.expectedCount, chapelSourceCount)
+			// Should have exactly one CHAPE_SOURCE frame
+			if chapeSourceCount != tt.expectedCount {
+				t.Errorf("Expected exactly %d CHAPE_SOURCE frame, got %d", tt.expectedCount, chapeSourceCount)
 			}
 
 			// Should contain the new source
-			if foundChapelSource != tt.newSource {
-				t.Errorf("Expected CHAPEL_SOURCE to be %q, got %q", tt.newSource, foundChapelSource)
+			if foundChapeSource != tt.newSource {
+				t.Errorf("Expected CHAPE_SOURCE to be %q, got %q", tt.newSource, foundChapeSource)
 			}
 
 			// Should preserve other TXXX frames (at most 1 each)
@@ -268,7 +268,7 @@ func TestTXXXFrameNoDuplicates(t *testing.T) {
 	}
 }
 
-func TestProcessArtworkWithChapelSource(t *testing.T) {
+func TestProcessArtworkWithChapeSource(t *testing.T) {
 
 	tmpFile, err := os.CreateTemp("", "test_*.mp3")
 	if err != nil {
@@ -277,32 +277,32 @@ func TestProcessArtworkWithChapelSource(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 	tmpFile.Close()
 
-	chapel := &Chapel{audio: tmpFile.Name()}
+	chape := &Chape{audio: tmpFile.Name()}
 
 	testCases := []struct {
 		name             string
-		chapelArtwork    string // Chapel struct artwork field
-		metadataArtwork  string // metadata.Artwork (from CHAPEL_SOURCE or data URI)
+		chapeArtwork    string // Chape struct artwork field
+		metadataArtwork  string // metadata.Artwork (from CHAPE_SOURCE or data URI)
 		expectedPath     string
 		shouldCreateFile bool
 	}{
 		{
-			name:             "CHAPEL_SOURCE missing file with data URI",
-			chapelArtwork:    "",
-			metadataArtwork:  "/tmp/test_missing.jpg", // This simulates CHAPEL_SOURCE
+			name:             "CHAPE_SOURCE missing file with data URI",
+			chapeArtwork:    "",
+			metadataArtwork:  "/tmp/test_missing.jpg", // This simulates CHAPE_SOURCE
 			expectedPath:     "/tmp/test_missing.jpg",
 			shouldCreateFile: true,
 		},
 		{
-			name:             "Chapel struct artwork overrides CHAPEL_SOURCE",
-			chapelArtwork:    "/tmp/test_override.jpg",
-			metadataArtwork:  "/tmp/test_chapel_source.jpg",
+			name:             "Chape struct artwork overrides CHAPE_SOURCE",
+			chapeArtwork:    "/tmp/test_override.jpg",
+			metadataArtwork:  "/tmp/test_chape_source.jpg",
 			expectedPath:     "/tmp/test_override.jpg",
 			shouldCreateFile: true,
 		},
 		{
 			name:             "Data URI used as-is",
-			chapelArtwork:    "",
+			chapeArtwork:    "",
 			metadataArtwork:  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
 			expectedPath:     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
 			shouldCreateFile: false,
@@ -316,7 +316,7 @@ func TestProcessArtworkWithChapelSource(t *testing.T) {
 				os.Remove(tc.expectedPath)
 			}
 
-			chapel.artwork = tc.chapelArtwork
+			chape.artwork = tc.chapeArtwork
 			metadata := &Metadata{
 				Artwork: tc.metadataArtwork,
 			}
@@ -324,21 +324,21 @@ func TestProcessArtworkWithChapelSource(t *testing.T) {
 			// For missing file cases, pre-populate metadata with data URI as if it came from embedded artwork
 			if tc.shouldCreateFile && !strings.HasPrefix(tc.metadataArtwork, "data:") {
 				// Simulate that we have embedded artwork available
-				// This would normally be set by getMetadata when CHAPEL_SOURCE exists but file doesn't
+				// This would normally be set by getMetadata when CHAPE_SOURCE exists but file doesn't
 				// For testing, we'll modify the test to directly test the file creation part
 
 				// Skip processArtwork test if no embedded data and test extraction directly
 				if strings.HasPrefix(tc.metadataArtwork, "/tmp/") {
 					// Test direct file extraction
 					dataURI := "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-					err := chapel.extractArtworkToFile(dataURI, tc.expectedPath)
+					err := chape.extractArtworkToFile(dataURI, tc.expectedPath)
 					if err != nil {
 						t.Fatalf("extractArtworkToFile failed: %v", err)
 					}
 					metadata.Artwork = tc.expectedPath
 				}
 			} else {
-				err := chapel.processArtwork(metadata)
+				err := chape.processArtwork(metadata)
 				if err != nil {
 					t.Fatalf("processArtwork failed: %v", err)
 				}

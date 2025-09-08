@@ -1,4 +1,4 @@
-package chapel
+package chape
 
 import (
 	"cmp"
@@ -14,7 +14,7 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
-func (c *Chapel) Dump(output io.Writer) error {
+func (c *Chape) Dump(output io.Writer) error {
 	metadata, err := c.getMetadata()
 	if err != nil {
 		return err
@@ -26,7 +26,7 @@ func (c *Chapel) Dump(output io.Writer) error {
 	}
 
 	// Add YAML Language Server schema comment
-	schemaComment := "# yaml-language-server: $schema=https://raw.githubusercontent.com/Songmu/chapel/refs/heads/main/schema.yaml\n"
+	schemaComment := "# yaml-language-server: $schema=https://raw.githubusercontent.com/Songmu/chape/refs/heads/main/schema.yaml\n"
 	if _, err = output.Write([]byte(schemaComment)); err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (c *Chapel) Dump(output io.Writer) error {
 }
 
 // getMetadata extracts metadata from the MP3 file
-func (c *Chapel) getMetadata() (*Metadata, error) {
+func (c *Chape) getMetadata() (*Metadata, error) {
 	// Open the MP3 file
 	file, err := os.Open(c.audio)
 	if err != nil {
@@ -87,7 +87,7 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 		}
 	}
 
-	// Priority: Chapel struct artwork > CHAPEL_SOURCE from MP3
+	// Priority: Chape struct artwork > CHAPE_SOURCE from MP3
 	if c.artwork != "" {
 		metadata.Artwork = c.artwork
 	} else {
@@ -95,21 +95,21 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 		if len(pictureFrames) > 0 {
 			if pf, ok := pictureFrames[0].(id3v2.PictureFrame); ok {
 				if len(pf.Picture) > 0 {
-					// Check for chapel source in TXXX frames first
-					chapelSource := ""
+					// Check for chape source in TXXX frames first
+					chapeSource := ""
 					txxxFrames := id3tag.GetFrames("TXXX")
 					for _, frame := range txxxFrames {
 						if udtf, ok := frame.(id3v2.UserDefinedTextFrame); ok {
 							// UserDefinedTextFrame has Description and Value fields
-							if udtf.Description == "CHAPEL_SOURCE" {
-								chapelSource = udtf.Value
+							if udtf.Description == "CHAPE_SOURCE" {
+								chapeSource = udtf.Value
 								break
 							}
 						}
 					}
-					// Always prefer CHAPEL_SOURCE if available, regardless of file existence
-					if chapelSource != "" {
-						metadata.Artwork = chapelSource
+					// Always prefer CHAPE_SOURCE if available, regardless of file existence
+					if chapeSource != "" {
+						metadata.Artwork = chapeSource
 					} else {
 						metadata.Artwork = fmt.Sprintf("data:%s;base64,%s",
 							pf.MimeType,
@@ -135,7 +135,7 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 		return cmp.Compare(a.Start, b.Start)
 	})
 
-	// Override artwork with Chapel struct setting if specified
+	// Override artwork with Chape struct setting if specified
 	if c.artwork != "" {
 		metadata.Artwork = c.artwork
 	}
@@ -149,7 +149,7 @@ func (c *Chapel) getMetadata() (*Metadata, error) {
 }
 
 // processArtwork handles artwork processing logic shared between Dump and Apply
-func (c *Chapel) processArtwork(metadata *Metadata) error {
+func (c *Chape) processArtwork(metadata *Metadata) error {
 	aw := metadata.Artwork
 	if aw != "" {
 		if !strings.HasPrefix(aw, "http://") && !strings.HasPrefix(aw, "https://") &&
@@ -178,7 +178,7 @@ func (c *Chapel) processArtwork(metadata *Metadata) error {
 }
 
 // getEmbeddedArtwork extracts embedded artwork from MP3 as data URI
-func (c *Chapel) getEmbeddedArtwork() (string, error) {
+func (c *Chape) getEmbeddedArtwork() (string, error) {
 	id3tag, err := id3v2.Open(c.audio, id3v2.Options{Parse: true})
 	if err != nil {
 		return "", err
@@ -200,7 +200,7 @@ func (c *Chapel) getEmbeddedArtwork() (string, error) {
 }
 
 // extractArtworkToFile extracts artwork from data URI and saves to file
-func (c *Chapel) extractArtworkToFile(dataURI, outputPath string) error {
+func (c *Chape) extractArtworkToFile(dataURI, outputPath string) error {
 	// Parse data URI
 	pictureData, mimeType, err := parseDataURI(dataURI)
 	if err != nil {

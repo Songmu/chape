@@ -1,16 +1,16 @@
-# Chapel
+# Chape
 
-[![Test Status](https://github.com/Songmu/chapel/actions/workflows/test.yaml/badge.svg?branch=main)][actions]
-[![Coverage Status](https://codecov.io/gh/Songmu/chapel/branch/main/graph/badge.svg)][codecov]
-[![MIT License](https://img.shields.io/github/license/Songmu/chapel)][license]
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/Songmu/chapel)][PkgGoDev]
+[![Test Status](https://github.com/Songmu/chape/actions/workflows/test.yaml/badge.svg?branch=main)][actions]
+[![Coverage Status](https://codecov.io/gh/Songmu/chape/branch/main/graph/badge.svg)][codecov]
+[![MIT License](https://img.shields.io/github/license/Songmu/chape)][license]
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/Songmu/chape)][PkgGoDev]
 
-[actions]: https://github.com/Songmu/chapel/actions?workflow=test
-[codecov]: https://codecov.io/gh/Songmu/chapel
-[license]: https://github.com/Songmu/chapel/blob/main/LICENSE
-[PkgGoDev]: https://pkg.go.dev/github.com/Songmu/chapel
+[actions]: https://github.com/Songmu/chape/actions?workflow=test
+[codecov]: https://codecov.io/gh/Songmu/chape
+[license]: https://github.com/Songmu/chape/blob/main/LICENSE
+[PkgGoDev]: https://pkg.go.dev/github.com/Songmu/chape
 
-Chapel is a powerful command-line tool for editing MP3 metadata using YAML format. It provides an intuitive way to manage ID3v2 tags, chapters, and artwork in MP3 files.
+Chape is a powerful command-line tool for editing MP3 metadata using YAML format. It provides an intuitive way to manage ID3v2 tags, chapters, and artwork in MP3 files.
 
 [![asciicast](https://asciinema.org/a/B0XoBtk61X4MfsZ0iFhRlWcRj.svg)](https://asciinema.org/a/B0XoBtk61X4MfsZ0iFhRlWcRj)
 
@@ -26,17 +26,17 @@ Chapel is a powerful command-line tool for editing MP3 metadata using YAML forma
 
 **Interactive editing with your `EDITOR`:**
 ```bash
-chapel audio.mp3
+chape audio.mp3
 ```
 
 **Dump metadata to YAML:**
 ```bash
-chapel dump audio.mp3 > metadata.yaml
+chape dump audio.mp3 > metadata.yaml
 ```
 
 **Apply YAML metadata to MP3:**
 ```bash
-chapel apply audio.mp3 < metadata.yaml
+chape apply audio.mp3 < metadata.yaml
 ```
 
 ### Options
@@ -47,22 +47,22 @@ chapel apply audio.mp3 < metadata.yaml
 
 **Edit metadata interactively:**
 ```bash
-chapel my-audiobook.mp3
+chape my-audiobook.mp3
 ```
 
 **Edit metadata with custom artwork:**
 ```bash
-chapel --artwork cover.jpg my-audiobook.mp3
+chape --artwork cover.jpg my-audiobook.mp3
 ```
 
 **Batch processing with automation:**
 ```bash
-chapel apply -y audio.mp3 < batch-metadata.yaml
+chape apply -y audio.mp3 < batch-metadata.yaml
 ```
 
 ## YAML Format
 
-Chapel uses a structured YAML format for metadata:
+Chape uses a structured YAML format for metadata:
 
 ```yaml
 title: "My Audiobook"
@@ -136,13 +136,13 @@ chapters:
 
 ### Artwork Sources
 
-Chapel supports multiple artwork sources:
+Chape supports multiple artwork sources:
 
 1. **Local file paths**: `artwork: "cover.jpg"`
 2. **HTTP/HTTPS URLs**: `artwork: "https://example.com/cover.jpg"`
 3. **Data URIs**: `artwork: "data:image/jpeg;base64,/9j/4AAQ..."`
 
-When you specify an artwork path that doesn't exist, Chapel will:
+When you specify an artwork path that doesn't exist, Chape will:
 1. Check if the MP3 has embedded artwork
 2. Automatically extract and save it to the specified path
 3. Update the metadata to reference the new file
@@ -151,12 +151,12 @@ When you specify an artwork path that doesn't exist, Chapel will:
 
 ### Interactive Editor Integration
 
-Chapel integrates with your preferred text editor for seamless metadata editing:
+Chape integrates with your preferred text editor for seamless metadata editing:
 
 ```bash
 # Uses $EDITOR environment variable
 export EDITOR=nano
-chapel audio.mp3
+chape audio.mp3
 ```
 
 ### Automation and Scripting
@@ -166,7 +166,7 @@ Use the `-y` flag for non-interactive batch processing:
 ```bash
 #!/bin/bash
 for file in *.mp3; do
-    echo "title: $(basename "$file" .mp3)" | chapel apply -y "$file"
+    echo "title: $(basename "$file" .mp3)" | chape apply -y "$file"
 done
 ```
 
@@ -175,30 +175,30 @@ done
 Extract artwork from MP3 files:
 ```bash
 # This will extract artwork to cover.jpg if it doesn't exist
-echo 'artwork: cover.jpg' | chapel apply audio.mp3
+echo 'artwork: cover.jpg' | chape apply audio.mp3
 ```
 
 Override artwork source:
 ```bash
-chapel --artwork https://example.com/new-cover.jpg audio.mp3
+chape --artwork https://example.com/new-cover.jpg audio.mp3
 ```
 
 ## Installation
 
 ```console
-% brew install Songmu/tap/chapel
+% brew install Songmu/tap/chape
 
 # Install the latest version. (Install it into ./bin/ by default).
-% curl -sfL https://raw.githubusercontent.com/Songmu/chapel/main/install.sh | sh -s
+% curl -sfL https://raw.githubusercontent.com/Songmu/chape/main/install.sh | sh -s
 
 # Specify installation directory ($(go env GOPATH)/bin/) and version.
-% curl -sfL https://raw.githubusercontent.com/Songmu/chapel/main/install.sh | sh -s -- -b $(go env GOPATH)/bin [vX.Y.Z]
+% curl -sfL https://raw.githubusercontent.com/Songmu/chape/main/install.sh | sh -s -- -b $(go env GOPATH)/bin [vX.Y.Z]
 
 # In alpine linux (as it does not come with curl by default)
-% wget -O - -q https://raw.githubusercontent.com/Songmu/chapel/main/install.sh | sh -s [vX.Y.Z]
+% wget -O - -q https://raw.githubusercontent.com/Songmu/chape/main/install.sh | sh -s [vX.Y.Z]
 
 # go install
-% go install github.com/Songmu/chapel/cmd/chapel@latest
+% go install github.com/Songmu/chape/cmd/chape@latest
 ```
 
 ## Author

@@ -1,6 +1,6 @@
 VERSION = $(shell godzil show-version)
 CURRENT_REVISION = $(shell git rev-parse --short HEAD)
-BUILD_LDFLAGS = "-s -w -X github.com/Songmu/chapel/version.Revision=$(CURRENT_REVISION)"
+BUILD_LDFLAGS = "-s -w -X github.com/Songmu/chape/version.Revision=$(CURRENT_REVISION)"
 u := $(if $(update),-u)
 
 .PHONY: deps
@@ -24,11 +24,11 @@ lint:
 
 .PHONY: build
 build:
-	go build -ldflags=$(BUILD_LDFLAGS) ./cmd/chapel
+	go build -ldflags=$(BUILD_LDFLAGS) ./cmd/chape
 
 .PHONY: install
 install:
-	go install -ldflags=$(BUILD_LDFLAGS) ./cmd/chapel
+	go install -ldflags=$(BUILD_LDFLAGS) ./cmd/chape
 
 .PHONY: release
 release: devel-deps
@@ -42,7 +42,7 @@ DIST_DIR = dist/v$(VERSION)
 crossbuild: CREDITS
 	rm -rf $(DIST_DIR)
 	godzil crossbuild -pv=v$(VERSION) -build-ldflags=$(BUILD_LDFLAGS) \
-      -os=linux,darwin -d=$(DIST_DIR) ./cmd/chapel
+      -os=linux,darwin -d=$(DIST_DIR) ./cmd/chape
 	cd $(DIST_DIR) && shasum -a 256 $$(find * -type f -maxdepth 0) > SHA256SUMS
 
 .PHONY: upload

@@ -1,4 +1,4 @@
-package chapel
+package chape
 
 import (
 	"bytes"

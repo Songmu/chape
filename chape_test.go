@@ -1,4 +1,4 @@
-package chapel_test
+package chape_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Songmu/chapel"
+	"github.com/Songmu/chape"
 	"github.com/goccy/go-yaml"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
@@ -18,7 +18,7 @@ func createDummyMP3(t *testing.T, duration time.Duration) string {
 	t.Helper()
 
 	tmpDir := t.TempDir()
-	mp3Path := filepath.Join(tmpDir, "chapel_test.mp3")
+	mp3Path := filepath.Join(tmpDir, "chape_test.mp3")
 	tmpFile, err := os.Create(mp3Path)
 	if err != nil {
 		t.Fatalf("Failed to create MP3 file: %v", err)
@@ -66,7 +66,7 @@ func normalizeYAMLForComparison(t *testing.T, yamlContent string) string {
 	t.Helper()
 
 	// Parse and re-marshal to normalize like apply.go does
-	var metadata chapel.Metadata
+	var metadata chape.Metadata
 	if err := yaml.Unmarshal([]byte(yamlContent), &metadata); err != nil {
 		t.Fatalf("Failed to unmarshal YAML: %v", err)
 	}
@@ -96,17 +96,17 @@ func TestIntegration(t *testing.T) {
 			defer os.Remove(mp3File)
 
 			// Apply YAML to MP3
-			chapel := chapel.New(mp3File)
+			chape := chape.New(mp3File)
 			originalReader := bytes.NewReader(originalYAML)
 
-			err = chapel.Apply(originalReader, true) // Use -y flag to skip prompts
+			err = chape.Apply(originalReader, true) // Use -y flag to skip prompts
 			if err != nil {
 				t.Fatalf("Failed to apply YAML to MP3: %v", err)
 			}
 
 			// Dump metadata back to YAML
 			var dumpedYAML bytes.Buffer
-			err = chapel.Dump(&dumpedYAML)
+			err = chape.Dump(&dumpedYAML)
 			if err != nil {
 				t.Fatalf("Failed to dump metadata from MP3: %v", err)
 			}
@@ -157,17 +157,17 @@ func TestIntegrationWithArtwork(t *testing.T) {
 artist: "Test Artist"
 artwork: "` + artworkPath + `"`
 
-	chapel := chapel.New(mp3File)
+	chape := chape.New(mp3File)
 
 	// Apply YAML
-	err = chapel.Apply(strings.NewReader(yamlWithArtwork), true)
+	err = chape.Apply(strings.NewReader(yamlWithArtwork), true)
 	if err != nil {
 		t.Fatalf("Failed to apply YAML with artwork: %v", err)
 	}
 
 	// First dump - should contain the original path because file exists
 	var dumpedYAML1 bytes.Buffer
-	err = chapel.Dump(&dumpedYAML1)
+	err = chape.Dump(&dumpedYAML1)
 	if err != nil {
 		t.Fatalf("Failed to dump metadata: %v", err)
 	}
@@ -179,7 +179,7 @@ artwork: "` + artworkPath + `"`
 		t.Errorf("Dumped content:\n%s", dumpedContent1)
 	}
 
-	// Remove the artwork file to test CHAPEL_SOURCE recovery
+	// Remove the artwork file to test CHAPE_SOURCE recovery
 	err = os.Remove(artworkPath)
 	if err != nil {
 		t.Fatalf("Failed to remove artwork file: %v", err)
@@ -187,7 +187,7 @@ artwork: "` + artworkPath + `"`
 
 	// Second dump - should extract from embedded artwork since original file is missing
 	var dumpedYAML2 bytes.Buffer
-	err = chapel.Dump(&dumpedYAML2)
+	err = chape.Dump(&dumpedYAML2)
 	if err != nil {
 		t.Fatalf("Failed to dump metadata after file removal: %v", err)
 	}
@@ -227,11 +227,11 @@ func TestIntegrationEmptyMP3(t *testing.T) {
 	mp3File := createDummyMP3(t, 1*time.Second)
 	defer os.Remove(mp3File)
 
-	chapel := chapel.New(mp3File)
+	chape := chape.New(mp3File)
 
 	// Dump empty MP3 metadata
 	var initialDump bytes.Buffer
-	err := chapel.Dump(&initialDump)
+	err := chape.Dump(&initialDump)
 	if err != nil {
 		t.Fatalf("Failed to dump initial metadata: %v", err)
 	}

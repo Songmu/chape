@@ -8,18 +8,18 @@ import (
 	"log"
 	"strings"
 
-	"github.com/Songmu/chapel"
+	"github.com/Songmu/chape"
 )
 
-const cmdName = "chapel"
+const cmdName = "chape"
 
-// Run the chapel
+// Run the chape
 func Run(ctx context.Context, argv []string, outStream, errStream io.Writer) error {
 	log.SetOutput(errStream)
 	log.SetPrefix(fmt.Sprintf("[%s] ", cmdName))
-	nameAndVer := fmt.Sprintf("%s (v%s ref:%s)", cmdName, chapel.Version, chapel.Revision)
+	nameAndVer := fmt.Sprintf("%s (v%s ref:%s)", cmdName, chape.Version, chape.Revision)
 	fs := flag.NewFlagSet(
-		fmt.Sprintf("%s (v%s rev:%s)", cmdName, chapel.Version, chapel.Revision), flag.ContinueOnError)
+		fmt.Sprintf("%s (v%s rev:%s)", cmdName, chape.Version, chape.Revision), flag.ContinueOnError)
 	fs.SetOutput(errStream)
 	fs.Usage = func() {
 		fmt.Fprintf(fs.Output(), "Usage of %s:\n", nameAndVer)
@@ -42,7 +42,7 @@ func Run(ctx context.Context, argv []string, outStream, errStream io.Writer) err
 		return fmt.Errorf("no args specified")
 	}
 	if strings.HasSuffix(argv[0], ".mp3") {
-		return chapel.New(argv[0], artworkPath).Edit(*yes)
+		return chape.New(argv[0], artworkPath).Edit(*yes)
 	}
 	if cmd, ok := cmder.dispatch[argv[0]]; ok {
 		return cmd.Run(ctx, argv[1:], outStream, errStream)
@@ -51,6 +51,6 @@ func Run(ctx context.Context, argv []string, outStream, errStream io.Writer) err
 }
 
 func printVersion(out io.Writer) error {
-	_, err := fmt.Fprintf(out, "%s v%s (rev:%s)\n", cmdName, chapel.Version, chapel.Revision)
+	_, err := fmt.Fprintf(out, "%s v%s (rev:%s)\n", cmdName, chape.Version, chape.Revision)
 	return err
 }

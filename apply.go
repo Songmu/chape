@@ -1,4 +1,4 @@
-package chapel
+package chape
 
 import (
 	"encoding/base64"
@@ -20,7 +20,7 @@ import (
 	"github.com/tcolgate/mp3"
 )
 
-func (c *Chapel) Apply(input io.Reader, yes bool) error {
+func (c *Chape) Apply(input io.Reader, yes bool) error {
 	var newMetadata Metadata
 	if err := yaml.NewDecoder(input).Decode(&newMetadata); err != nil {
 		return fmt.Errorf("failed to decode YAML: %w", err)
@@ -57,7 +57,7 @@ func (c *Chapel) Apply(input io.Reader, yes bool) error {
 		// Check if input is os.Stdin (when called from pipe/redirect)
 		// Type assertion to check if input is *os.File and if it's stdin
 		if file, ok := input.(*os.File); ok && file == os.Stdin {
-			// Input is from stdin (e.g., chapel apply < file.yaml)
+			// Input is from stdin (e.g., chape apply < file.yaml)
 			// Need to reopen terminal for user interaction
 
 			// Use /dev/tty on Unix-like systems, CON on Windows
@@ -100,7 +100,7 @@ func generateDiff(oldYAML, newYAML string) string {
 }
 
 // writeMetadata writes metadata to the MP3 file
-func (c *Chapel) writeMetadata(metadata *Metadata) error {
+func (c *Chape) writeMetadata(metadata *Metadata) error {
 	// Get audio duration for chapter end times
 	audioDuration, err := c.getAudioDuration()
 	if err != nil {
@@ -180,10 +180,10 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 			if !strings.HasPrefix(metadata.Artwork, "data:") {
 				txxxFrames := id3tag.GetFrames("TXXX")
 				var preservedFrames []id3v2.UserDefinedTextFrame
-				// Collect all non-CHAPEL_SOURCE TXXX frames
+				// Collect all non-CHAPE_SOURCE TXXX frames
 				for _, frame := range txxxFrames {
 					if udtf, ok := frame.(id3v2.UserDefinedTextFrame); ok {
-						if udtf.Description != "CHAPEL_SOURCE" {
+						if udtf.Description != "CHAPE_SOURCE" {
 							preservedFrames = append(preservedFrames, udtf)
 						}
 					}
@@ -197,10 +197,10 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 						Value:       frame.Value,
 					})
 				}
-				// Add new CHAPEL_SOURCE frame
+				// Add new CHAPE_SOURCE frame
 				id3tag.AddUserDefinedTextFrame(id3v2.UserDefinedTextFrame{
 					Encoding:    id3v2.EncodingUTF8,
-					Description: "CHAPEL_SOURCE",
+					Description: "CHAPE_SOURCE",
 					Value:       metadata.Artwork,
 				})
 			}
@@ -255,7 +255,7 @@ func (c *Chapel) writeMetadata(metadata *Metadata) error {
 }
 
 // getAudioDuration calculates the actual duration of the MP3 file
-func (c *Chapel) getAudioDuration() (time.Duration, error) {
+func (c *Chape) getAudioDuration() (time.Duration, error) {
 	file, err := os.Open(c.audio)
 	if err != nil {
 		return 0, fmt.Errorf("failed to open file: %w", err)
@@ -368,7 +368,7 @@ func getMimeTypeFromExt(ext string) string {
 	}
 }
 
-var userAgent = "chapel/" + Version + " (+https://github.com/Songmu/chapel)"
+var userAgent = "chape/" + Version + " (+https://github.com/Songmu/chape)"
 
 // parseHTTPURL downloads artwork from HTTP/HTTPS URL and returns picture data and MIME type
 func parseHTTPURL(url string) ([]byte, string, error) {
