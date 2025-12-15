@@ -8,7 +8,7 @@ require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/sergi/go-diff v1.4.0
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
-	golang.org/x/text v0.28.0
+	golang.org/x/text v0.32.0
 )
 
 require (
