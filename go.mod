@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/Songmu/prompter v0.5.1
 	github.com/bogem/id3v2/v2 v2.1.4
-	github.com/goccy/go-yaml v1.18.0
+	github.com/goccy/go-yaml v1.19.1
 	github.com/sergi/go-diff v1.4.0
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	golang.org/x/text v0.28.0
